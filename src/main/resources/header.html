@@ -1,0 +1,73 @@
+<!-- 
+ * EML to PDF Converter
+ * Copyright (C) 2015 Nick Russler
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title></title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.header-name {
+  padding-right: 5px;
+  color: #9E9E9E;
+  text-align: right;
+  vertical-align: top;
+}
+
+.header-value {
+  
+}
+
+#header_fields {
+  background: white;
+  margin: auto;
+  border: 1px solid #DDD;
+  border-radius: 3px;
+  padding: 8px;
+  width: 90%%; /* Double percent due to Java's String.format */
+  box-sizing: border-box;
+}
+</style>
+
+<script type="text/javascript">
+	function timer() {
+		try {
+			parent.postMessage(Math.max(document.body.offsetHeight, document.body.scrollHeight), '*');
+		} catch (r) {
+		}
+		
+		setTimeout(timer, 10);
+	};
+	
+	timer();
+</script>
+
+</head>
+<body>
+  <table id="header_fields">
+    <tbody>%s</tbody>
+  </table>
+</body>
+</html>
