@@ -10,9 +10,6 @@ Usage: EMLtoPDFConverter [options]
     -d, --debug
        Debug mode
        Default: false
-    -dc, --disable-crashreports
-       Do not send crash reports to the developer.
-       Default: false
     -e, --error
        Display only Error messages.
        Default: false
