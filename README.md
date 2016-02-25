@@ -51,6 +51,8 @@ Usage: EMLtoPDFConverter [options]
   ```
 
 ### How to build
+Checkout this repository. The build will fail if you remove the git files (e.g. download this as zip from github).
+
  * `gradlew shadowJar` <br>
 Creates a single self contained Jar in `build/libs`
 
@@ -64,4 +66,4 @@ Creates a windows setup in `build/innosetup`. This task needs the Launch4j binar
 Executes the unit tests and generates various reports (jacoco, checkstyle, findbugs, jdepend, unit test report).
 
 ### License
-The code available under the terms of the GNU Affero General Public License (AGPL). This means you have to release the source code of applications that use this software. If you can't do so you can <a target="_blank" href="https://eml-to-pdf.com">buy a commercial license</a>.
+The code is available under the terms of the Apache V2 License.
