@@ -42,8 +42,6 @@ import com.google.common.io.Files;
  * @author Nick Russler
  */
 public class Main {
-	private static final String BUG_EMAIL_URL = "https://eml-to-pdf.com/email.php";
-
 	public static void main(String[] args) throws IOException {
 		CommandLineParameters cli = new CommandLineParameters();
 		JCommander jCmd = new JCommander(cli, args);
@@ -121,47 +119,6 @@ public class Main {
 			MimeMessageConverter.convertToPdf(in, out, cli.isHideHeaders(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);
 		} catch (Exception e) {
 			Logger.error("The eml could not be converted. Error: %s", Throwables.getStackTraceAsString(e));
-
-			if (!cli.isDisableCrashreports()) {
-				/* Try to send the bugreport via email */
-				StringBuilder bugdetails = new StringBuilder(800);
-
-				bugdetails.append("User: ");
-				bugdetails.append(System.getProperty("user.name"));
-				bugdetails.append("\n");
-
-				InetAddress localHost = InetAddress.getLocalHost();
-				bugdetails.append("Localhost: ");
-				bugdetails.append(localHost.getHostAddress());
-				bugdetails.append(" - ");
-				bugdetails.append(localHost.getHostName());
-				bugdetails.append("\n");
-
-				bugdetails.append("GEO: ");
-				bugdetails.append(HttpUtils.getRequest("http://ipinfo.io/json").replaceAll("\"", ""));
-				bugdetails.append("\n");
-
-				bugdetails.append("OS: ");
-				bugdetails.append(System.getProperty("os.name"));
-				bugdetails.append(" ");
-				bugdetails.append(System.getProperty("os.version"));
-				bugdetails.append(" ");
-				bugdetails.append(System.getProperty("os.arch"));
-				bugdetails.append("\n");
-
-				bugdetails.append("Java: ");
-				bugdetails.append(System.getProperty("java.vendor"));
-				bugdetails.append(" ");
-				bugdetails.append(System.getProperty("java.version"));
-				bugdetails.append("\n\n");
-
-				bugdetails.append("Exception\n");
-				bugdetails.append(Throwables.getStackTraceAsString(e));
-
-				String subject = "Bugreport from " + System.getProperty("user.name") + " | " + new Date();
-
-				HttpUtils.postRequest(BUG_EMAIL_URL, String.format("subject=%s&body=%s", subject, bugdetails.toString()));
-			}
 		}
 	}
 }

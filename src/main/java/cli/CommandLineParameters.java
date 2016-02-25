@@ -56,9 +56,6 @@ public class CommandLineParameters {
 	@Parameter(names = {"-a", "--extract-attachments"}, description = "Extract Attachments.")
 	private boolean extractAttachments = false;
 	
-	@Parameter(names = {"-dc", "--disable-crashreports"}, description = "Do not send crash reports to the developer.")
-	private boolean disableCrashreports = false;
-	
 	@Parameter(names = {"-ad", "--extract-attachments-directory"}, description = "Extract Attachments to this Directory, if this option is not present the directory is besides the pdf as \"<pdf-name>-attachments\".")
 	private String extractAttachmentsDir;
 	
@@ -151,14 +148,6 @@ public class CommandLineParameters {
 
 	public void setExtractAttachmentsDir(String extractAttachmentsDir) {
 		this.extractAttachmentsDir = extractAttachmentsDir;
-	}
-
-	public boolean isDisableCrashreports() {
-		return disableCrashreports;
-	}
-
-	public void setDisableCrashreports(boolean disableCrashreports) {
-		this.disableCrashreports = disableCrashreports;
 	}
 
 	public boolean isGui() {
