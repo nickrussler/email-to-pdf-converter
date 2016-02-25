@@ -1,8 +1,5 @@
 ##EML to PDF Converter
 
-### Homepage
-<a href="https://eml-to-pdf.com">eml-to-pdf.com</a>
-
 ### Screenshot
 <img src="https://www.whitebyte.info/wp-content/uploads/2015/02/scr1.png" />
 
