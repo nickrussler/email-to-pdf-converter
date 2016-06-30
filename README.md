@@ -5,7 +5,7 @@
 
 ### Commandline Interface
 ```
-Usage: EMLtoPDFConverter [options] 
+Usage: EMLtoPDFConverter [options] [eml-filename]
   Options:
     -d, --debug
        Debug mode
@@ -43,6 +43,7 @@ Usage: EMLtoPDFConverter [options]
        Print the version number.
        Default: false
   ```
+E.g. ``java -jar emailconverter-2.0.0-all.jar example.eml`` (you need [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH)
 
 ### How to build
 Checkout this repository. The build will fail if you remove the git files (e.g. download this as zip from github).
