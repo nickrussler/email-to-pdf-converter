@@ -127,8 +127,3 @@ tasks.withType(FindBugs) {
 check.doLast {
   dependencyUpdates.execute()
 }
-
-/* task for generating gradle wrapper */
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.2.1'
-}
