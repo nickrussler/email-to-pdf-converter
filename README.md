@@ -46,7 +46,7 @@ Usage: EMLtoPDFConverter [options] [eml-filename]
 E.g. ``java -jar emailconverter-2.0.0-all.jar example.eml`` (you need [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH)
 
 ### How to build
-Checkout this repository. The build will fail if you remove the git files (e.g. download this as zip from github).
+You need to git clone this repository. The build will fail if you remove the .git folder (e.g. download this as zip from github).
 
  * `gradlew shadowJar` <br>
 Creates a single self contained Jar in `build/libs`
