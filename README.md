@@ -1,5 +1,12 @@
 ##EML to PDF Converter
 
+### Download
+You can download the lates binaries [**here**](//github.com/nickrussler/eml-to-pdf-converter/releases/latest).
+
+There you can find a Windows setup.exe and a jar.<br>
+If you want to use the jar (e.g. for a non Windows OS) you need the [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH.
+
+
 ### Screenshot
 <img src="https://www.whitebyte.info/wp-content/uploads/2015/02/scr1.png" />
 
