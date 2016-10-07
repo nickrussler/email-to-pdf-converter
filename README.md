@@ -59,10 +59,10 @@ You need to git clone this repository. The build will fail if you remove the .gi
 Creates a single self contained Jar in `build/libs`
 
  * `gradlew dist` <br>
-Same as `gradlew shadowJar` but additionally creates windows exe launchers in `build/libs` for gui and console mode. This task needs the Launch4j binary in the path.
+Same as `gradlew shadowJar` but additionally creates windows exe launchers in `build/libs` for gui and console mode. This task needs the [Launch4j](http://launch4j.sourceforge.net/) binary in the PATH.
 
  * `gradlew innosetup` <br>
-Creates a windows setup in `build/innosetup`. This task needs the Launch4j binary as well as the Inno Setup issc.exe in the path.
+Creates a windows setup in `build/innosetup`. This task needs the [Launch4j](http://launch4j.sourceforge.net/) binary as well as the [Inno Setup](http://www.jrsoftware.org/isinfo.php) issc.exe in the PATH.
 
  * `gradlew check` <br>
 Executes the unit tests and generates various reports (jacoco, checkstyle, findbugs, jdepend, unit test report).
