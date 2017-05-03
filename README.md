@@ -1,4 +1,4 @@
-##EML to PDF Converter
+## EML to PDF Converter (Email to PDF Converter)
 
 ### Download
 You can download the lates binaries [**here**](//github.com/nickrussler/eml-to-pdf-converter/releases/latest).
