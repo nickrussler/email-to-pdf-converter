@@ -1,5 +1,11 @@
 ## EML to PDF Converter (Email to PDF Converter)
 
+This software can be used to convert .eml files (emails as plain text in MIME format) to pdf files. It can be used as a library, command line tool or desktop application with its GUI.
+
+The conversion is done by parsing (and cleaning) the mime/structure, converting it to html and then using [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) to convert the generated html to a pdf file.
+
+It also handles inline images, corrupt mime headers and can use a proxy.
+
 ### Download
 You can download the lates binaries [**here**](//github.com/nickrussler/eml-to-pdf-converter/releases/latest).
 
