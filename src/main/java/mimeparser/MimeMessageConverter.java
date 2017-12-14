@@ -83,6 +83,10 @@ public class MimeMessageConverter {
 	private static final Pattern IMG_CID_REGEX = Pattern.compile("cid:(.*?)\"", Pattern.DOTALL);
 	private static final Pattern IMG_CID_PLAIN_REGEX = Pattern.compile("\\[cid:(.*?)\\]", Pattern.DOTALL);
 
+	private static final String VIEWPORT_SIZE = "2480x3508";
+	private static final int CONVERSION_DPI = 300;
+	private static final int IMAGE_QUALITY = 100;
+
 	/**
 	 * Execute a command and redirect its output to the standard output.
 	 * @param command list of the command and its parameters
@@ -258,9 +262,10 @@ public class MimeMessageConverter {
 		Logger.debug("Write pdf to %s", pdf.getAbsolutePath());
 
 		List<String> cmd = new ArrayList<String>(Arrays.asList("wkhtmltopdf",
-				"--viewport-size", "2480x3508",
+				"--viewport-size", VIEWPORT_SIZE,
 				// "--disable-smart-shrinking",
-				"--image-quality", "100",
+				"--dpi", String.valueOf(CONVERSION_DPI),
+				"--image-quality", String.valueOf(IMAGE_QUALITY),
 				"--encoding", charsetName));
 		cmd.addAll(extParams);
 		cmd.add(tmpHtml.getAbsolutePath());
