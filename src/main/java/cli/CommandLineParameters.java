@@ -31,6 +31,9 @@ public class CommandLineParameters {
 
 	@Parameter(names = {"-o", "--output-filepath"}, description = "Filepath of the produced PDF document. If this option is ommited the PDF will be placed alongside the EML File.")
 	private String output;
+        
+        @Parameter(names = {"-html", "--create_html"}, description = "Produce an HTML document instead of PDF.")
+	private boolean create_html;
 
 	@Parameter(names = {"-p", "--proxy"}, description = "Proxy (e.g. \"http://10.64.1.74:81\"). If \"auto\" is supplied the default system proxy will be used.")
 	private String proxy;
@@ -76,6 +79,14 @@ public class CommandLineParameters {
 
 	public void setOutput(String output) {
 		this.output = output;
+	}
+        
+        public boolean isHtml() {
+		return create_html;
+	}
+        
+        public void setHtml(boolean create_html) {
+		this.create_html = create_html;
 	}
 
 	public boolean isDebug() {

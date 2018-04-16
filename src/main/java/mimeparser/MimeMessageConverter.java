@@ -110,7 +110,7 @@ public class MimeMessageConverter {
 	 * Convert an EML file to PDF.
 	 * @throws Exception
 	 */
-	public static void convertToPdf(String emlPath, String pdfOutputPath, boolean hideHeaders, boolean extractAttachments, String attachmentsdir, List<String> extParams) throws Exception {
+	public static void convertToPdf(String emlPath, String pdfOutputPath, boolean hideHeaders, boolean isHtml, boolean extractAttachments, String attachmentsdir, List<String> extParams) throws Exception {
 		Logger.info("Start converting %s to %s", emlPath, pdfOutputPath);
 		
 		Logger.debug("Read eml file from %s", emlPath);
@@ -254,36 +254,40 @@ public class MimeMessageConverter {
 			htmlBody += String.format(ADD_HEADER_IFRAME_JS_TAG_TEMPLATE, tmpHtmlHeader.toURI(), Resources.toString(Resources.getResource("contentScript.js"), StandardCharsets.UTF_8));
 		}
 		
-		File tmpHtml = File.createTempFile("emailtopdf", ".html");
-		Logger.debug("Write html to temporary file %s", tmpHtml.getAbsolutePath());
-		Files.write(htmlBody, tmpHtml, Charset.forName(charsetName));
+                File pdf_or_html = new File(pdfOutputPath);
+                if (!isHtml) {
+                    File tmpHtml = File.createTempFile("emailtopdf", ".html");
+                    Logger.debug("Write html to temporary file %s", tmpHtml.getAbsolutePath());
+                    Files.write(htmlBody, tmpHtml, Charset.forName(charsetName));
+                    Logger.debug("Write pdf to %s", pdf_or_html.getAbsolutePath());
 
-		File pdf = new File(pdfOutputPath);
-		Logger.debug("Write pdf to %s", pdf.getAbsolutePath());
+                    List<String> cmd = new ArrayList<String>(Arrays.asList("wkhtmltopdf",
+                                    "--viewport-size", VIEWPORT_SIZE,
+                                    // "--disable-smart-shrinking",
+                                    "--dpi", String.valueOf(CONVERSION_DPI),
+                                    "--image-quality", String.valueOf(IMAGE_QUALITY),
+                                    "--encoding", charsetName));
+                    cmd.addAll(extParams);
+                    cmd.add(tmpHtml.getAbsolutePath());
+                    cmd.add(pdf_or_html.getAbsolutePath());
 
-		List<String> cmd = new ArrayList<String>(Arrays.asList("wkhtmltopdf",
-				"--viewport-size", VIEWPORT_SIZE,
-				// "--disable-smart-shrinking",
-				"--dpi", String.valueOf(CONVERSION_DPI),
-				"--image-quality", String.valueOf(IMAGE_QUALITY),
-				"--encoding", charsetName));
-		cmd.addAll(extParams);
-		cmd.add(tmpHtml.getAbsolutePath());
-		cmd.add(pdf.getAbsolutePath());
-
-		Logger.debug("Execute: %s", Joiner.on(' ').join(cmd));
-		execCommand(cmd);
-
-		if (!tmpHtml.delete()) {
+                    Logger.debug("Execute: %s", Joiner.on(' ').join(cmd));
+                    execCommand(cmd);
+                    
+                    if (!tmpHtml.delete()) {
 			tmpHtml.deleteOnExit();
-		}
+                    }
 
-		if (tmpHtmlHeader != null) {
-			if (!tmpHtmlHeader.delete()) {
-				tmpHtmlHeader.deleteOnExit();
-			}
-		}
-		
+                    if (tmpHtmlHeader != null) {
+                            if (!tmpHtmlHeader.delete()) {
+                                    tmpHtmlHeader.deleteOnExit();
+                            }
+                    }
+                } else {
+                    Logger.debug("Write html to file %s", pdf_or_html.getAbsolutePath());
+                    Files.write(htmlBody, pdf_or_html, Charset.forName(charsetName));
+                }
+                
 		/* ######### Save attachments ######### */
 		if (extractAttachments) {
 			Logger.debug("Start extracting attachments");
@@ -292,9 +296,9 @@ public class MimeMessageConverter {
 			if (!Strings.isNullOrEmpty(attachmentsdir)) {
 				attachmentDir = new File(attachmentsdir);
 			} else {
-				attachmentDir = new File(pdf.getParentFile(), Files.getNameWithoutExtension(pdfOutputPath) + "-attachments");
+				attachmentDir = new File(pdf_or_html.getParentFile(), Files.getNameWithoutExtension(pdfOutputPath) + "-attachments");
 			}
-			
+                        
 			attachmentDir.mkdirs();
 			
 			Logger.info("Extract attachments to %s", attachmentDir.getAbsolutePath());

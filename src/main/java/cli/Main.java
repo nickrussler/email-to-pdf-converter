@@ -91,7 +91,11 @@ public class Main {
 
 
 		if (Strings.isNullOrEmpty(cli.getOutput())) {
-			out = Files.getNameWithoutExtension(in) + ".pdf";
+                        if (!cli.isHtml()) {
+                            out = Files.getNameWithoutExtension(in) + ".pdf";
+                        } else {
+                            out = Files.getNameWithoutExtension(in) + ".html";
+                        }
 
 			File parent = new File(in).getParentFile();
 			if (parent != null) {
@@ -116,7 +120,7 @@ public class Main {
 		}
 
 		try {
-			MimeMessageConverter.convertToPdf(in, out, cli.isHideHeaders(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);
+			MimeMessageConverter.convertToPdf(in, out, cli.isHideHeaders(), cli.isHtml(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);
 		} catch (Exception e) {
 			Logger.error("The eml could not be converted. Error: %s", Throwables.getStackTraceAsString(e));
 		}
