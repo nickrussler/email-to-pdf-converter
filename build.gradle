@@ -3,8 +3,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-    	classpath group: 'net.sf.proguard', name: 'proguard-gradle', version: '5.2.1'
-    	classpath group: 'org.ajoberstar', name: 'gradle-git', version: '1.5.1'
+    	classpath group: 'net.sf.proguard', name: 'proguard-gradle', version: '6.1.1'
+    	classpath group: 'org.ajoberstar', name: 'gradle-git', version: '1.7.2'
     }
 }
 
@@ -18,8 +18,8 @@ plugins {
   
   id 'jacoco'
   
-  id 'com.github.johnrengelman.shadow' version '1.2.3'
-  id 'com.github.ben-manes.versions'  version '0.13.0'
+  id 'com.github.johnrengelman.shadow' version '5.1.0'
+  id 'com.github.ben-manes.versions'  version '0.21.0'
 }
 
 sourceCompatibility = 1.7
@@ -46,10 +46,10 @@ repositories {
 
 dependencies {
     compile group: 'com.google.guava', name: 'guava', version: '19.0'
-    compile group: 'com.sun.mail', name: 'javax.mail', version: '1.5.6'
-    compile group: 'com.beust', name: 'jcommander', version: '1.48'
-    compile group: 'org.apache.tika', name: 'tika-core', version: '1.13'
-    compile group: 'com.github.markusbernhardt', name: 'proxy-vole', version: '1.0.2'
+    compile group: 'com.sun.mail', name: 'javax.mail', version: '1.6.2'
+    compile group: 'com.beust', name: 'jcommander', version: '1.72'
+    compile group: 'org.apache.tika', name: 'tika-core', version: '1.21'
+    compile group: 'com.github.markusbernhardt', name: 'proxy-vole', version: '1.0.5'
 	    
     testCompile group: 'junit', name: 'junit', version: '4.+'
     testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.+'
@@ -101,8 +101,9 @@ task innosetup(type:Exec) {
 innosetup.dependsOn dist
 
 /* jacoco configuration */
-check.dependsOn jacocoTestReport
+check.dependsOn jacocoTestReport, dependencyUpdates
 jacocoTestReport.mustRunAfter test
+dependencyUpdates.mustRunAfter jacocoTestReport
 
 /* checkstyle configuration */
 checkstyle {
@@ -121,9 +122,4 @@ tasks.withType(FindBugs) {
         xml.enabled = false
         html.enabled = true
     }
-}
-
-/* versions configuration */
-check.doLast {
-  dependencyUpdates.execute()
 }
