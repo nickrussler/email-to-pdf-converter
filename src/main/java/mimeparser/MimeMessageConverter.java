@@ -181,12 +181,8 @@ public class MimeMessageConverter {
 		} else {
 			Logger.debug("No html message body could be found, fall back to text/plain and embed it into a html document");
 
-			// replace \n line breaks with <br>
-			htmlBody = htmlBody.replace("\n", "<br>").replace("\r", "");
-
-			// replace whitespace with &nbsp;
-			htmlBody = htmlBody.replace(" ", "&nbsp;");
-
+			htmlBody = "<div style=\"white-space: pre-wrap\">" + htmlBody.replace("\n", "<br>").replace("\r", "") + "</div>";
+			
 			htmlBody = String.format(HTML_WRAPPER_TEMPLATE, charsetName, htmlBody);
 			if (inlineImageMap.size() > 0) {
 				Logger.debug("Embed the referenced images (cid) using <img src=\"data:image ...> syntax");
