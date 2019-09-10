@@ -25,7 +25,7 @@ plugins {
 sourceCompatibility = 1.7
 
 /* calculate version */
-ext.repo = org.ajoberstar.grgit.Grgit.open(project.file('.'))
+ext.repo = org.ajoberstar.grgit.Grgit.open(currentDir: project.rootDir)
 version = "${repo.tag.list().last().name}"
 
 jar {
