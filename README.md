@@ -1,4 +1,4 @@
-## EML to PDF Converter (Email to PDF Converter) <a href="https://travis-ci.org/nickrussler/eml-to-pdf-converter"><img align="right" src="https://travis-ci.org/nickrussler/eml-to-pdf-converter.svg?branch=master"></a>
+## EML to PDF Converter (Email to PDF Converter) [![Actions Status](https://github.com/nickrussler/eml-to-pdf-converter/workflows/Check,%20Build/badge.svg)](https://github.com/nickrussler/eml-to-pdf-converter/actions)
 
 This software can be used to convert eml files (emails as plain text in MIME format) to pdf files. It can be used as a library, command line tool or desktop application with its GUI.
 
