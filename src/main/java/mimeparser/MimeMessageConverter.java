@@ -259,6 +259,7 @@ public class MimeMessageConverter {
 
 		List<String> cmd = new ArrayList<String>(Arrays.asList("wkhtmltopdf",
 				"--viewport-size", VIEWPORT_SIZE,
+				"--enable-local-file-access",
 				// "--disable-smart-shrinking",
 				"--dpi", String.valueOf(CONVERSION_DPI),
 				"--image-quality", String.valueOf(IMAGE_QUALITY),
