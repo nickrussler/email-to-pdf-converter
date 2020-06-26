@@ -1,12 +1,12 @@
 /*
  * Copyright 2016 Nick Russler
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import com.beust.jcommander.Parameter;
  * @author Nick Russler
  */
 public class CommandLineParameters {
-	@Parameter(description = "<EML-File>", arity = 1)
-	private List<String> files = new ArrayList<String>();
+	@Parameter(description = "<EML-File>", variableArity = true)
+	private List<String> files = new ArrayList<>();
 
 	@Parameter(names = {"-o", "--output-filepath"}, description = "Filepath of the produced PDF document. If this option is ommited the PDF will be placed alongside the EML File.")
 	private String output;
@@ -46,19 +46,19 @@ public class CommandLineParameters {
 
 	@Parameter(names = {"-?", "--help"}, description = "Print this help.", help = true)
 	private boolean help;
-	
+
 	@Parameter(names = {"-v", "--version"}, description = "Print the version number.")
 	private boolean version;
-	
+
 	@Parameter(names = {"-hh", "--hide-headers"}, description = "Do not add email headers (subject, from, etc.) at the beginning of the PDF document.")
 	private boolean hideHeaders = false;
-	
+
 	@Parameter(names = {"-a", "--extract-attachments"}, description = "Extract Attachments.")
 	private boolean extractAttachments = false;
-	
+
 	@Parameter(names = {"-ad", "--extract-attachments-directory"}, description = "Extract Attachments to this Directory, if this option is not present the directory is besides the pdf as \"<pdf-name>-attachments\".")
 	private String extractAttachmentsDir;
-	
+
 	@Parameter(names = {"-gui", "--show-graphical-user-interface"}, description = "Show graphical user interface (other parameters are ignored when using this switch).")
 	private boolean gui;
 

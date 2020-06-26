@@ -1,43 +1,33 @@
-buildscript {
-	repositories {
-        mavenCentral()
-    }
-    dependencies {
-    	classpath group: 'net.sf.proguard', name: 'proguard-gradle', version: '6.1.1'
-    	classpath group: 'org.ajoberstar', name: 'gradle-git', version: '1.7.2'
-    }
-}
-
 plugins {
-  id 'java'
-  id 'eclipse'
-  
-  id 'checkstyle'
-  id 'findbugs'
-  id 'jdepend'
-  
-  id 'jacoco'
-  
-  id 'com.github.johnrengelman.shadow' version '5.1.0'
-  id 'com.github.ben-manes.versions'  version '0.21.0'
+    id 'java'
+    id 'eclipse'
+
+    id 'checkstyle'
+    id 'com.github.spotbugs' version '4.4.3'
+
+    id 'jacoco'
+
+    id 'com.github.johnrengelman.shadow' version '6.0.0'
+    id 'com.github.ben-manes.versions' version '0.28.0'
+    id 'com.palantir.git-version' version '0.12.3'
 }
 
 sourceCompatibility = 1.7
 
-/* calculate version */
-ext.repo = org.ajoberstar.grgit.Grgit.open(currentDir: project.rootDir)
-version = "${repo.tag.list().last().name}"
+/* git version */
+def gitVersionDetails = versionDetails()
+version = gitVersionDetails.lastTag
 
 jar {
     manifest {
         attributes 'Main-Class': 'cli.Main',
-        		   'Implementation-Title' : 'EML to PDF Converter',
-        		   'Implementation-Version': version + "+${repo.branch.current.name}.${repo.head().abbreviatedId}"
+                'Implementation-Title': 'EML to PDF Converter',
+                'Implementation-Version': version + "+${gitVersionDetails.branchName}.${gitVersionDetails.gitHash}"
     }
 }
 
 shadowJar {
-  baseName = 'emailconverter'
+    baseName = 'emailconverter'
 }
 
 repositories {
@@ -45,46 +35,38 @@ repositories {
 }
 
 dependencies {
-    compile group: 'com.google.guava', name: 'guava', version: '19.0'
-    compile group: 'com.sun.mail', name: 'javax.mail', version: '1.6.2'
-    compile group: 'com.beust', name: 'jcommander', version: '1.72'
-    compile group: 'org.apache.tika', name: 'tika-core', version: '1.21'
-    compile group: 'com.github.markusbernhardt', name: 'proxy-vole', version: '1.0.5'
-	    
-    testCompile group: 'junit', name: 'junit', version: '4.+'
-    testCompile group: 'org.hamcrest', name: 'hamcrest-all', version: '1.+'
-    testCompile group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.+'
-}
+    implementation 'com.google.guava:guava:29.0-jre'
+    implementation 'com.sun.mail:javax.mail:1.6.2'
+    implementation 'com.beust:jcommander:1.78'
+    implementation 'org.apache.tika:tika-core:1.24.1'
+    implementation 'com.github.markusbernhardt:proxy-vole:1.0.5'
 
-/* proguard configuration */
-task proguard(type: proguard.gradle.ProGuardTask) {
-    injars "build/libs/EmailConverter-${version}-all.jar"
-    outjars "build/libs/EmailConverter-${version}-all-opt.jar"
-    configuration file("gradle/resources/proguard.cfg")
+    testImplementation 'junit:junit:4.+'
+    testImplementation 'org.hamcrest:hamcrest-all:1.+'
+    testImplementation 'com.github.stefanbirkner:system-rules:1.+'
 }
-proguard.mustRunAfter shadowJar
 
 /* launch4j launch configuration */
 task launch4j_rename(type: Copy) {
-  from "build/libs/emailconverter-${version}-all.jar"
-  into 'build/libs/'
-  rename {String fileName -> 'emailconverter.jar'}
+    from "build/libs/emailconverter-${version}-all.jar"
+    into 'build/libs/'
+    rename { String fileName -> 'emailconverter.jar' }
 }
 launch4j_rename.mustRunAfter shadowJar
 
-task launch4j(type:Exec) {
-  workingDir '.'
+task launch4j(type: Exec) {
+    workingDir '.'
 
-  //on windows:
-  commandLine 'launch4jc', 'gradle/resources/launch4j.xml'
+    //on windows:
+    commandLine 'launch4jc', 'gradle/resources/launch4j.xml'
 }
 launch4j.dependsOn launch4j_rename
 
-task launch4j_gui(type:Exec) {
-  workingDir '.'
+task launch4j_gui(type: Exec) {
+    workingDir '.'
 
-  //on windows:
-  commandLine 'launch4jc', 'gradle/resources/launch4j_gui.xml'
+    //on windows:
+    commandLine 'launch4jc', 'gradle/resources/launch4j_gui.xml'
 }
 launch4j.dependsOn launch4j_rename
 
@@ -94,9 +76,9 @@ task dist(type: Copy) {
 dist.dependsOn shadowJar, launch4j, launch4j_gui
 
 /* innosetup generation */
-task innosetup(type:Exec) {
-  workingDir '.'
-  commandLine 'iscc', "/dMyAppVersion=${version}", 'gradle/resources/innosetup.iss'
+task innosetup(type: Exec) {
+    workingDir '.'
+    commandLine 'iscc', "/dMyAppVersion=${version}", 'gradle/resources/innosetup.iss'
 }
 innosetup.dependsOn dist
 
@@ -107,17 +89,16 @@ dependencyUpdates.mustRunAfter jacocoTestReport
 
 /* checkstyle configuration */
 checkstyle {
-	configFile = file("src/test/resources/checkstyle.xml")
+    configFile = file("src/test/resources/checkstyle.xml")
 }
 
-/* findbugs configuration */
-findbugs {
-	effort 'max'
-	reportLevel 'high'
-	excludeFilter file("src/test/resources/findbugsExcludeFilter.xml")
+/* spotbugs configuration */
+spotbugs {
+    effort 'max'
+    reportLevel 'high'
 }
 
-tasks.withType(FindBugs) {
+spotbugsMain {
     reports {
         xml.enabled = false
         html.enabled = true

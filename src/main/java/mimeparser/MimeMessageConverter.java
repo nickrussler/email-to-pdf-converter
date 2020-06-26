@@ -1,12 +1,12 @@
 /*
  * Copyright 2016 Nick Russler
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ public class MimeMessageConverter {
 	private static final String HTML_WRAPPER_TEMPLATE = "<!DOCTYPE html><html><head><style>body{font-size: 0.5cm;}</style><meta charset=\"%s\"><title>title</title></head><body>%s</body></html>";
 	private static final String ADD_HEADER_IFRAME_JS_TAG_TEMPLATE = "<script id=\"header-v6a8oxpf48xfzy0rhjra\" data-file=\"%s\" type=\"text/javascript\">%s</script>";
 	private static final String HEADER_FIELD_TEMPLATE = "<tr><td class=\"header-name\">%s</td><td class=\"header-value\">%s</td></tr>";
-	
+
 	private static final Pattern IMG_CID_REGEX = Pattern.compile("cid:(.*?)\"", Pattern.DOTALL);
 	private static final Pattern IMG_CID_PLAIN_REGEX = Pattern.compile("\\[cid:(.*?)\\]", Pattern.DOTALL);
 
@@ -112,7 +112,7 @@ public class MimeMessageConverter {
 	 */
 	public static void convertToPdf(String emlPath, String pdfOutputPath, boolean hideHeaders, boolean extractAttachments, String attachmentsdir, List<String> extParams) throws Exception {
 		Logger.info("Start converting %s to %s", emlPath, pdfOutputPath);
-		
+
 		Logger.debug("Read eml file from %s", emlPath);
 		final MimeMessage message = new MimeMessage(null, new FileInputStream(emlPath));
 
@@ -130,7 +130,7 @@ public class MimeMessageConverter {
 		} catch (Exception e) {
 			// ignore this error
 		}
-		
+
 		String[] recipients = new String[0];
 		String recipientsRaw = message.getHeader("To", null);
 		if (!Strings.isNullOrEmpty(recipientsRaw)) {
@@ -144,9 +144,9 @@ public class MimeMessageConverter {
 				// ignore this error
 			}
 		}
-		
+
 		String sentDateStr = message.getHeader("date", null);
-		
+
 		/* ######### Parse the mime structure ######### */
 		Logger.info("Mime Structure of %s:\n%s", emlPath, MimeMessageParser.printStructure(message));
 
@@ -156,7 +156,7 @@ public class MimeMessageConverter {
 
 		Logger.info("Extract the inline images");
 		final HashMap<String, MimeObjectEntry<String>> inlineImageMap = MimeMessageParser.getInlineImageMap(message);
-		
+
 		/* ######### Embed images in the html ######### */
 		String htmlBody = bodyEntry.getEntry();
 		if (bodyEntry.getContentType().match("text/html")) {
@@ -182,7 +182,7 @@ public class MimeMessageConverter {
 			Logger.debug("No html message body could be found, fall back to text/plain and embed it into a html document");
 
 			htmlBody = "<div style=\"white-space: pre-wrap\">" + htmlBody.replace("\n", "<br>").replace("\r", "") + "</div>";
-			
+
 			htmlBody = String.format(HTML_WRAPPER_TEMPLATE, charsetName, htmlBody);
 			if (inlineImageMap.size() > 0) {
 				Logger.debug("Embed the referenced images (cid) using <img src=\"data:image ...> syntax");
@@ -221,35 +221,35 @@ public class MimeMessageConverter {
 		Logger.debug("----------------------------------");
 
 		Logger.info("Start conversion to pdf");
-		
+
 		File tmpHtmlHeader = null;
 		if (!hideHeaders) {
 			tmpHtmlHeader = File.createTempFile("emailtopdf", ".html");
 			String tmpHtmlHeaderStr = Resources.toString(Resources.getResource("header.html"), StandardCharsets.UTF_8);
 			String headers = "";
-			
+
 			if (!Strings.isNullOrEmpty(from)) {
 				headers += String.format(HEADER_FIELD_TEMPLATE, "From", HtmlEscapers.htmlEscaper().escape(from));
 			}
-			
+
 			if (!Strings.isNullOrEmpty(subject)) {
 				headers += String.format(HEADER_FIELD_TEMPLATE, "Subject", "<b>" + HtmlEscapers.htmlEscaper().escape(subject) + "<b>");
 			}
-			
+
 			if (recipients.length > 0) {
 				headers += String.format(HEADER_FIELD_TEMPLATE, "To", HtmlEscapers.htmlEscaper().escape(Joiner.on(", ").join(recipients)));
 			}
-			
+
 			if (!Strings.isNullOrEmpty(sentDateStr)) {
 				headers += String.format(HEADER_FIELD_TEMPLATE, "Date", HtmlEscapers.htmlEscaper().escape(sentDateStr));
 			}
-			
+
 			Files.write(String.format(tmpHtmlHeaderStr, headers), tmpHtmlHeader, StandardCharsets.UTF_8);
-			
+
 			// Append this script tag dirty to the bottom
 			htmlBody += String.format(ADD_HEADER_IFRAME_JS_TAG_TEMPLATE, tmpHtmlHeader.toURI(), Resources.toString(Resources.getResource("contentScript.js"), StandardCharsets.UTF_8));
 		}
-		
+
 		File tmpHtml = File.createTempFile("emailtopdf", ".html");
 		Logger.debug("Write html to temporary file %s", tmpHtml.getAbsolutePath());
 		Files.write(htmlBody, tmpHtml, Charset.forName(charsetName));
@@ -257,7 +257,7 @@ public class MimeMessageConverter {
 		File pdf = new File(pdfOutputPath);
 		Logger.debug("Write pdf to %s", pdf.getAbsolutePath());
 
-		List<String> cmd = new ArrayList<String>(Arrays.asList("wkhtmltopdf",
+		List<String> cmd = new ArrayList<>(Arrays.asList("wkhtmltopdf",
 				"--viewport-size", VIEWPORT_SIZE,
 				"--enable-local-file-access",
 				// "--disable-smart-shrinking",
@@ -280,60 +280,60 @@ public class MimeMessageConverter {
 				tmpHtmlHeader.deleteOnExit();
 			}
 		}
-		
+
 		/* ######### Save attachments ######### */
 		if (extractAttachments) {
 			Logger.debug("Start extracting attachments");
-			
+
 			File attachmentDir = null;
 			if (!Strings.isNullOrEmpty(attachmentsdir)) {
 				attachmentDir = new File(attachmentsdir);
 			} else {
 				attachmentDir = new File(pdf.getParentFile(), Files.getNameWithoutExtension(pdfOutputPath) + "-attachments");
 			}
-			
+
 			attachmentDir.mkdirs();
-			
+
 			Logger.info("Extract attachments to %s", attachmentDir.getAbsolutePath());
-			
+
 			List<Part> attachmentParts = MimeMessageParser.getAttachments(message);
 			Logger.debug("Found %s attachments", attachmentParts.size());
 			for (int i = 0; i < attachmentParts.size(); i++) {
 				Logger.debug("Process Attachment %s", i);
-				
+
 				Part part = attachmentParts.get(i);
-				
+
 				String attachmentFilename = null;
 				try {
 					attachmentFilename = part.getFileName();
 				} catch (Exception e) {
 					// ignore this error
 				}
-				
+
 				File attachFile = null;
 				if (!Strings.isNullOrEmpty(attachmentFilename)) {
 					attachFile = new File(attachmentDir, attachmentFilename);
 				} else {
 					String extension = "";
-					
+
 					// try to find at least the file extension via the mime type
 					try {
 						extension = MimeTypes.getDefaultMimeTypes().forName(part.getContentType()).getExtension();
 					} catch (Exception e) {
 						// ignore this error
 					}
-					
+
 					Logger.debug("Attachment %s did not hold any name, use random name", i);
 					attachFile = File.createTempFile("nameless-", extension, attachmentDir);
 				}
-				
+
 				Logger.debug("Save Attachment %s to %s", i, attachFile.getAbsolutePath());
 				FileOutputStream fos = new FileOutputStream(attachFile);
 				ByteStreams.copy(part.getInputStream(), fos);
 				fos.close();
 			}
 		}
-		
+
 		Logger.info("Conversion finished");
 	}
 }

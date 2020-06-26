@@ -1,12 +1,12 @@
 /*
  * Copyright 2016 Nick Russler
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,8 +44,9 @@ import com.google.common.io.Files;
 public class Main {
 	public static void main(String[] args) throws IOException {
 		CommandLineParameters cli = new CommandLineParameters();
-		JCommander jCmd = new JCommander(cli, args);
+		JCommander jCmd = new JCommander(cli);
 		jCmd.setProgramName("EMLtoPDFConverter");
+		jCmd.parse(args);
 
 		if (cli.isGui()) {
 			MainWindow.main(new String[0]);
@@ -103,6 +104,12 @@ public class Main {
 
 		if ("auto".equalsIgnoreCase(cli.getProxy())) {
 			Proxy defaultProxy = HttpUtils.getDefaultProxy();
+
+			if (defaultProxy == null) {
+				Logger.error("Default proxy could not be determined, please specify it manually");
+				return;
+			}
+
 			InetSocketAddress defaultProxyAddress = (InetSocketAddress) defaultProxy.address();
 			String proxy = defaultProxy.type().toString() + "://" + defaultProxyAddress.toString();
 
