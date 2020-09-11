@@ -18,45 +18,47 @@ If you want to use the jar (e.g. for a non Windows OS) you need the [wkhtmltopdf
 
 ### Commandline Interface
 ```
-Usage: EMLtoPDFConverter [options] [eml-filename]
+Usage: EMLtoPDFConverter [options] <EML-File>
   Options:
     -d, --debug
-       Debug mode
-       Default: false
+      Debug mode
+      Default: false
     -e, --error
-       Display only Error messages.
-       Default: false
+      Display only Error messages.
+      Default: false
     -a, --extract-attachments
-       Extract Attachments.
-       Default: false
+      Extract Attachments.
+      Default: false
     -ad, --extract-attachments-directory
-       Extract Attachments to this Directory, if this option is not present the
-       directory is besides the pdf as "-attachments".
+      Extract Attachments to this Directory, if this option is not present the
+      directory is besides the pdf as "<pdf-name>-attachments".
     -?, --help
-       Print this help.
-       Default: false
+      Print this help.
     -hh, --hide-headers
-       Do not add email headers (subject, from, etc.) at the beginning of the
-       PDF document.
-       Default: false
+      Do not add email headers (subject, from, etc.) at the beginning of the
+      PDF document.
+      Default: false
     -o, --output-filepath
-       Filepath of the produced PDF document. If this option is ommited the PDF
-       will be placed alongside the EML File.
+      Filepath of the produced PDF document. If this option is ommited the PDF
+      will be placed alongside the EML File.
+    -s, --page-size
+      Set wkhtmltopdf paper size to: A4, Letter, etc. (default A4)
+      Default: A4
     -p, --proxy
-       Proxy (e.g. "http://10.64.1.74:81"). If "auto" is supplied the default
-       system proxy will be used.
+      Proxy (e.g. "http://10.64.1.74:81"). If "auto" is supplied the default
+      system proxy will be used.
     -q, --quiet
-       Do not display any messages at all.
-       Default: false
+      Do not display any messages at all.
+      Default: false
     -gui, --show-graphical-user-interface
-       Show graphical user interface (other parameters are ignored when using
-       this switch).
-       Default: false
+      Show graphical user interface (other parameters are ignored when using
+      this switch).
+      Default: false
     -v, --version
-       Print the version number.
-       Default: false
+      Print the version number.
+      Default: false
   ```
-E.g. ``java -jar emailconverter-2.0.0-all.jar example.eml`` (you need [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH)
+E.g. ``java -jar emailconverter-2.1.1-all.jar example.eml`` (you need [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH)
 
 ### How to build
 You need to git clone this repository. The build will fail if you remove the .git folder (e.g. download this as zip from github).
