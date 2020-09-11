@@ -1,12 +1,12 @@
 /*
  * Copyright 2016 Nick Russler
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.ContentType;
-import javax.mail.internet.MimePart;
 import javax.mail.internet.MimeUtility;
 import javax.mail.internet.ParseException;
 
@@ -61,9 +60,9 @@ public class ContentTypeCleaner {
 	 * @param contentType
 	 * @return new Charset instance, or null if not parsable
 	 */
-	private static Charset parseCharset(ContentType ct) {
+	private static Charset parseCharset(ContentType contentType) {
 		try {
-			return Charset.forName(ct.getParameter("charset"));
+			return Charset.forName(contentType.getParameter("charset"));
 		} catch (Exception e) {
 			return null;
 		}
@@ -200,12 +199,11 @@ public class ContentTypeCleaner {
 
 	/**
 	 * Attempt to repair the given contentType if broken.
-	 * @param mp Mimepart holding the contentType
 	 * @param contentType ContentType
 	 * @return fixed contentType String
 	 * @throws MessagingException
 	 */
-	public static String cleanContentType(MimePart mp, String contentType) throws MessagingException {
+	public static String cleanContentType(String contentType) throws MessagingException {
 		ContentType ct = parseContentType(contentType);
 
 		if (ct == null) {

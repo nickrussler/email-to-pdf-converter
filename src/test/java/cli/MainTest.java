@@ -17,7 +17,7 @@
 package cli;
 
 import static org.hamcrest.Matchers.hasItems;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -92,7 +92,7 @@ public class MainTest {
 	}
 
 	@Test
-	public void main_simplePlainMessage() throws MessagingException, IOException, URISyntaxException {
+	public void main_simplePlainMessage() throws IOException, URISyntaxException {
 		File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
 		String eml = new File(MainTest.class.getClassLoader().getResource("eml/testPlain.eml").toURI()).getAbsolutePath();
 
@@ -118,7 +118,7 @@ public class MainTest {
 	}
 
 	@Test
-	public void main_htmlMessage() throws MessagingException, IOException, URISyntaxException {
+	public void main_htmlMessage() throws IOException, URISyntaxException {
 		File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
 		String eml = new File(MainTest.class.getClassLoader().getResource("eml/testHtml.eml").toURI()).getAbsolutePath();
 
@@ -143,7 +143,7 @@ public class MainTest {
 	}
 
 	@Test
-	public void main_attachments() throws MessagingException, IOException, URISyntaxException {
+	public void main_attachments() throws IOException, URISyntaxException {
 		File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
 		String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachments.eml").toURI()).getAbsolutePath();
 
@@ -182,7 +182,7 @@ public class MainTest {
 	}
 
 	@Test
-	public void main_attachmentsSniffFileExtension() throws MessagingException, IOException, URISyntaxException {
+	public void main_attachmentsSniffFileExtension() throws IOException, URISyntaxException {
 		File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
 		String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachmentsNoName.eml").toURI()).getAbsolutePath();
 

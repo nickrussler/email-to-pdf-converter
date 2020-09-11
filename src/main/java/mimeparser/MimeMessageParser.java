@@ -1,12 +1,12 @@
 /*
  * Copyright 2016 Nick Russler
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,13 +42,13 @@ public class MimeMessageParser {
 	/***
 	 * Walk the Mime Structure recursivly and execute the callback on every part.
 	 * @param p mime object
-	 * @param initial level of current depth of the part
+	 * @param level of current depth of the part
 	 * @param callback Object holding the callback function
 	 * @throws Exception
 	 */
 	private static void walkMimeStructure(Part p, int level, WalkMimeCallback callback) throws Exception {
 		callback.walkMimeCallback(p, level);
-		
+
 		if (p.isMimeType("multipart/*")) {
 			Multipart mp = (Multipart) p.getContent();
 			for (int i = 0; i < mp.getCount(); i++) {
@@ -56,7 +56,7 @@ public class MimeMessageParser {
 			}
 		}
 	}
-	
+
 	/***
 	 * Print the structure of the Mime object.
 	 * @param p Mime object
@@ -64,27 +64,27 @@ public class MimeMessageParser {
 	 */
 	public static String printStructure(Part p) throws Exception {
 		final StringBuilder result = new StringBuilder();
-		
+
 		result.append("-----------Mime Message-----------\n");
 		walkMimeStructure(p, 0, new WalkMimeCallback() {
 			@Override
 			public void walkMimeCallback(Part p, int level) throws Exception {
 				String s = "> " + Strings.repeat("|  ", level) + new ContentType(p.getContentType()).getBaseType();
-				
+
 				String[] contentDispositionArr = p.getHeader("Content-Disposition");
 				if (contentDispositionArr != null) {
 					s += "; " + new ContentDisposition(contentDispositionArr[0]).getDisposition();
 				}
-				
+
 				result.append(s);
 				result.append("\n");
 			}
 		});
 		result.append("----------------------------------");
-		
+
 		return result.toString();
 	}
-	
+
 	/**
 	 * Get the String Content of a MimePart.
 	 * @param p MimePart
@@ -93,28 +93,28 @@ public class MimeMessageParser {
 	 * @throws MessagingException
 	 */
 	private static String getStringContent(Part p) throws IOException, MessagingException {
-		Object content = null;
-		
+		Object content;
+
 		try {
 			content = p.getContent();
 		} catch (Exception e) {
 			Logger.debug("Email body could not be read automatically (%s), we try to read it anyway.", e.toString());
-			
+
 			// most likely the specified charset could not be found
 			content = p.getInputStream();
 		}
-		
+
 		String stringContent = null;
-		
+
 		if (content instanceof String) {
 			stringContent = (String) content;
 		} else if (content instanceof InputStream) {
 			stringContent = new String(ByteStreams.toByteArray((InputStream) content), "utf-8");
 		}
-		
+
 		return stringContent;
 	}
-	
+
 	/**
 	 * Find the main message body, prefering html over plain.
 	 * @param p mime object
@@ -123,7 +123,7 @@ public class MimeMessageParser {
 	 */
 	public static MimeObjectEntry<String> findBodyPart(Part p) throws Exception {
 		final MimeObjectEntry<String> result = new MimeObjectEntry<String>("", new ContentType("text/plain; charset=\"utf-8\""));
-		
+
 		walkMimeStructure(p, 0, new WalkMimeCallback() {
 			@Override
 			public void walkMimeCallback(Part p, int level) throws Exception {
@@ -131,14 +131,14 @@ public class MimeMessageParser {
 				if (!p.isMimeType("text/plain") && !p.isMimeType("text/html")) {
 					return;
 				}
-				
+
 				String stringContent = getStringContent(p);
 				boolean isAttachment = Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition());
-				
+
 				if (Strings.isNullOrEmpty(stringContent) || isAttachment) {
 					return;
 				}
-				
+
 				// use text/plain entries only when we found nothing before
 				if (result.getEntry().isEmpty() || p.isMimeType("text/html")) {
 					result.setEntry(stringContent);
@@ -146,10 +146,10 @@ public class MimeMessageParser {
 				}
 			}
 		});
-		
+
 		return result;
 	}
-	
+
 	/**
 	 * Get all inline images (images with an Content-Id) as a Hashmap.
 	 * The key is the Content-Id and all images in all multipart containers are included in the map.
@@ -159,13 +159,13 @@ public class MimeMessageParser {
 	 */
 	public static HashMap<String, MimeObjectEntry<String>> getInlineImageMap(Part p) throws Exception {
 		final HashMap<String, MimeObjectEntry<String>> result = new HashMap<String, MimeObjectEntry<String>>();
-		
+
 		walkMimeStructure(p, 0, new WalkMimeCallback() {
 			@Override
 			public void walkMimeCallback(Part p, int level) throws Exception {
 				if (p.isMimeType("image/*") && (p.getHeader("Content-Id") != null)) {
 					String id = p.getHeader("Content-Id")[0];
-		
+
 					BASE64DecoderStream b64ds = (BASE64DecoderStream) p.getContent();
 					String imageBase64 = BaseEncoding.base64().encode(ByteStreams.toByteArray(b64ds));
 					result.put(id, new MimeObjectEntry<String>(imageBase64, new ContentType(p.getContentType())));
@@ -175,10 +175,10 @@ public class MimeMessageParser {
 
 		return result;
 	}
-	
+
 	public static List<Part> getAttachments(Part p) throws Exception {
 		final List<Part> result = new ArrayList<Part>();
-		
+
 		walkMimeStructure(p, 0, new WalkMimeCallback() {
 			@Override
 			public void walkMimeCallback(Part p, int level) throws Exception {
@@ -187,7 +187,7 @@ public class MimeMessageParser {
 				}
 			}
 		});
-		
+
 		return result;
 	}
 }
