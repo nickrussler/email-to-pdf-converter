@@ -98,6 +98,7 @@ public class MainTest {
 
 		String[] args = new String[]{
 				"-o", tmpPdf.getAbsolutePath(),
+				"-s", "Letter",
 				eml
 		};
 

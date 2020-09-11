@@ -62,6 +62,9 @@ public class CommandLineParameters {
 	@Parameter(names = {"-gui", "--show-graphical-user-interface"}, description = "Show graphical user interface (other parameters are ignored when using this switch).")
 	private boolean gui;
 
+	@Parameter(names = {"-s", "--page-size"}, description = "Set wkhtmltopdf paper size to: A4, Letter, etc. (default A4)")
+	private String pageSize = "A4";
+
 	public List<String> getFiles() {
 		return files;
 	}
@@ -156,5 +159,13 @@ public class CommandLineParameters {
 
 	public void setGui(boolean gui) {
 		this.gui = gui;
+	}
+
+	public String getPageSize() {
+		return pageSize;
+	}
+
+	public void setPageSize(String pageSize) {
+		this.pageSize = pageSize;
 	}
 }

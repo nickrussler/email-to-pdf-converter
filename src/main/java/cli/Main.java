@@ -42,7 +42,7 @@ import com.google.common.io.Files;
  * @author Nick Russler
  */
 public class Main {
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) {
 		CommandLineParameters cli = new CommandLineParameters();
 		JCommander jCmd = new JCommander(cli);
 		jCmd.setProgramName("EMLtoPDFConverter");
@@ -90,7 +90,6 @@ public class Main {
 
 		String out = cli.getOutput();
 
-
 		if (Strings.isNullOrEmpty(cli.getOutput())) {
 			out = Files.getNameWithoutExtension(in) + ".pdf";
 
@@ -100,7 +99,7 @@ public class Main {
 			}
 		}
 
-		List<String> extParams = new ArrayList<String>();
+		List<String> extParams = new ArrayList<>();
 
 		if ("auto".equalsIgnoreCase(cli.getProxy())) {
 			Proxy defaultProxy = HttpUtils.getDefaultProxy();
@@ -121,6 +120,9 @@ public class Main {
 			extParams.add(cli.getProxy());
 			Logger.debug("Use proxy from parameters %s", cli.getProxy());
 		}
+
+		extParams.add("--page-size");
+		extParams.add(cli.getPageSize());
 
 		try {
 			MimeMessageConverter.convertToPdf(in, out, cli.isHideHeaders(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);

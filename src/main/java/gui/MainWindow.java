@@ -381,11 +381,7 @@ public class MainWindow {
 				argsOptions.toArray(args);
 				args[args.length - 1] = l.get(i);
 
-				try {
-					Main.main(args);
-				} catch (IOException e1) {
-					// ignore this error
-				}
+				Main.main(args);
 
 				final String text = "Email " + (i + 1) + " of " + listSize;
 				final int percent = (int) Math.ceil(((i + 1d) * 100d) / listSize);
