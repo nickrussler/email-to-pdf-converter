@@ -19,6 +19,7 @@ package mimeparser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ import com.google.common.io.Resources;
  * @author Nick Russler
  */
 public class MimeMessageConverter {
-	/**
+	/*
 	 * Set System parameters to alleviate Java's built in Mime Parser strictness.
 	 */
 	static {
@@ -215,7 +216,7 @@ public class MimeMessageConverter {
 		Logger.debug("Date: %s", sentDateStr);
 		String bodyExcerpt = htmlBody.replace("\n", "").replace("\r", "");
 		if (bodyExcerpt.length() >= 60) {
-			bodyExcerpt = bodyExcerpt.substring(0, 40) + " [...] " + bodyExcerpt.substring(bodyExcerpt.length() - 20, bodyExcerpt.length());
+			bodyExcerpt = bodyExcerpt.substring(0, 40) + " [...] " + bodyExcerpt.substring(bodyExcerpt.length() - 20);
 		}
 		Logger.debug("Body (excerpt): %s", bodyExcerpt);
 		Logger.debug("----------------------------------");
@@ -225,7 +226,9 @@ public class MimeMessageConverter {
 		File tmpHtmlHeader = null;
 		if (!hideHeaders) {
 			tmpHtmlHeader = File.createTempFile("emailtopdf", ".html");
-			String tmpHtmlHeaderStr = Resources.toString(Resources.getResource("header.html"), StandardCharsets.UTF_8);
+
+			URL headerResource = MimeMessageConverter.class.getClassLoader().getResource("header.html");
+			String tmpHtmlHeaderStr = Resources.toString(headerResource, StandardCharsets.UTF_8);
 			String headers = "";
 
 			if (!Strings.isNullOrEmpty(from)) {
@@ -247,7 +250,8 @@ public class MimeMessageConverter {
 			Files.write(String.format(tmpHtmlHeaderStr, headers), tmpHtmlHeader, StandardCharsets.UTF_8);
 
 			// Append this script tag dirty to the bottom
-			htmlBody += String.format(ADD_HEADER_IFRAME_JS_TAG_TEMPLATE, tmpHtmlHeader.toURI(), Resources.toString(Resources.getResource("contentScript.js"), StandardCharsets.UTF_8));
+			URL contentScriptResource = MimeMessageConverter.class.getClassLoader().getResource("contentScript.js");
+			htmlBody += String.format(ADD_HEADER_IFRAME_JS_TAG_TEMPLATE, tmpHtmlHeader.toURI(), Resources.toString(contentScriptResource, StandardCharsets.UTF_8));
 		}
 
 		File tmpHtml = File.createTempFile("emailtopdf", ".html");
@@ -285,7 +289,7 @@ public class MimeMessageConverter {
 		if (extractAttachments) {
 			Logger.debug("Start extracting attachments");
 
-			File attachmentDir = null;
+			File attachmentDir;
 			if (!Strings.isNullOrEmpty(attachmentsdir)) {
 				attachmentDir = new File(attachmentsdir);
 			} else {
@@ -310,7 +314,7 @@ public class MimeMessageConverter {
 					// ignore this error
 				}
 
-				File attachFile = null;
+				File attachFile;
 				if (!Strings.isNullOrEmpty(attachmentFilename)) {
 					attachFile = new File(attachmentDir, attachmentFilename);
 				} else {
