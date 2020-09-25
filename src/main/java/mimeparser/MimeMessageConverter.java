@@ -22,14 +22,14 @@ import java.io.FileOutputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.mail.Part;
+import javax.mail.internet.MailDateFormat;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
 
@@ -90,6 +90,8 @@ public class MimeMessageConverter {
 	private static final int CONVERSION_DPI = 300;
 	private static final int IMAGE_QUALITY = 100;
 
+	private static final DateFormat DATE_FORMATTER = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG);
+
 	/**
 	 * Execute a command and redirect its output to the standard output.
 	 * @param command list of the command and its parameters
@@ -148,7 +150,18 @@ public class MimeMessageConverter {
 			}
 		}
 
-		String sentDateStr = message.getHeader("date", null);
+		String sentDateStr = null;
+		try {
+			Date sentDate = message.getSentDate();
+			sentDateStr = DATE_FORMATTER.format(sentDate);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if (sentDateStr == null) {
+			Logger.error("Could not parse the date, fallback to raw value");
+			sentDateStr = message.getHeader("date", null);
+		}
 
 		/* ######### Parse the mime structure ######### */
 		Logger.info("Mime Structure of %s:\n%s", emlPath, MimeMessageParser.printStructure(message));

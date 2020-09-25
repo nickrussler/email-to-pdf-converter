@@ -60,7 +60,7 @@ Usage: EMLtoPDFConverter [options] <EML-File>
   ```
 E.g. ``java -jar emailconverter-2.1.1-all.jar example.eml`` (you need [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH)
 
-### How to build
+### How to Build
 You need to git clone this repository. The build will fail if you remove the .git folder (e.g. download this as zip from github).
 
  * `gradlew shadowJar` <br>
@@ -74,6 +74,9 @@ Creates a windows setup in `build/innosetup`. This task needs the [Launch4j](htt
 
  * `gradlew check` <br>
 Executes the unit tests and generates various reports (jacoco, checkstyle, findbugs, jdepend, unit test report).
+
+### Date Formatting
+Dates are formatted with the default locale. You can change it, e.g. by passing the VM argument `-Duser.language=en-US`
 
 ### License
 The code is available under the terms of the Apache V2 License.
