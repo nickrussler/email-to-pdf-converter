@@ -76,7 +76,7 @@ Creates a windows setup in `build/innosetup`. This task needs the [Launch4j](htt
 Executes the unit tests and generates various reports (jacoco, checkstyle, findbugs, jdepend, unit test report).
 
 ### Date Formatting
-Dates are formatted with the default locale. You can change it, e.g. by passing the VM argument `-Duser.language=en-US`
+Dates are formatted with the default locale. You can change it, e.g. by passing the VM argument `-Duser.language=en-US` similar to setting the timezone e.g. `-Duser.timezone="Asia/Kolkata"`.
 
 ### License
 The code is available under the terms of the Apache V2 License.
