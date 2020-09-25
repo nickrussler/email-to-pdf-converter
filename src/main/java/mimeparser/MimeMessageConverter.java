@@ -81,6 +81,8 @@ public class MimeMessageConverter {
 	private static final String ADD_HEADER_IFRAME_JS_TAG_TEMPLATE = "<script id=\"header-v6a8oxpf48xfzy0rhjra\" data-file=\"%s\" type=\"text/javascript\">%s</script>";
 	private static final String HEADER_FIELD_TEMPLATE = "<tr><td class=\"header-name\">%s</td><td class=\"header-value\">%s</td></tr>";
 
+	private static final Pattern HTML_META_CHARSET_REGEX = Pattern.compile("(<meta(?!\\s*(?:name|value)\\s*=)[^>]*?charset)\\s*=[\\s\"']*([^\\s\"'/>]*)", Pattern.DOTALL);
+
 	private static final Pattern IMG_CID_REGEX = Pattern.compile("cid:(.*?)\"", Pattern.DOTALL);
 	private static final Pattern IMG_CID_PLAIN_REGEX = Pattern.compile("\\[cid:(.*?)\\]", Pattern.DOTALL);
 
@@ -153,7 +155,7 @@ public class MimeMessageConverter {
 
 		Logger.debug("Find the main message body");
 		MimeObjectEntry<String> bodyEntry = MimeMessageParser.findBodyPart(message);
-		String charsetName = bodyEntry.getContentType().getParameter("charset");
+		final String charsetName = bodyEntry.getContentType().getParameter("charset");
 
 		Logger.info("Extract the inline images");
 		final HashMap<String, MimeObjectEntry<String>> inlineImageMap = MimeMessageParser.getInlineImageMap(message);
@@ -179,6 +181,20 @@ public class MimeMessageConverter {
 					}
 				});
 			}
+
+			// overwrite html declared charset with email header charset
+			htmlBody = StringReplacer.replace(htmlBody, HTML_META_CHARSET_REGEX, new StringReplacerCallback() {
+				@Override
+				public String replace(Matcher m) throws Exception {
+					String declaredCharset = m.group(2);
+
+					if (!charsetName.equalsIgnoreCase(declaredCharset)) {
+						Logger.debug("Html declared different charset (%s) then the email header (%s), override with email header", declaredCharset, charsetName);
+					}
+
+					return m.group(1) + charsetName;
+				}
+			});
 		} else {
 			Logger.debug("No html message body could be found, fall back to text/plain and embed it into a html document");
 
