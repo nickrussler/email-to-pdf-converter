@@ -27,6 +27,7 @@ import javax.mail.internet.ParseException;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 /**
@@ -140,9 +141,9 @@ public class ContentTypeCleaner {
 	 */
 	private static ContentType decodeContentTypeAsQuotedPrintable(String contentType) {
 		try {
-			ByteArrayInputStream baos = new ByteArrayInputStream(contentType.getBytes("utf-8"));
+			ByteArrayInputStream baos = new ByteArrayInputStream(contentType.getBytes(StandardCharsets.UTF_8));
 			InputStream decode = MimeUtility.decode(baos, "quoted-printable");
-			String contentTypeString = new String(ByteStreams.toByteArray(decode), "utf-8");
+			String contentTypeString = new String(ByteStreams.toByteArray(decode), StandardCharsets.UTF_8);
 			return new ContentType(contentTypeString);
 		} catch (Exception e) {
 			return null;

@@ -118,7 +118,7 @@ public class MimeMessageConverter {
 		final MimeMessage message;
 		if (emailFilePath.toLowerCase().endsWith(".msg")) {
 			Logger.debug("Read msg file from %s, convert it to eml", emailFilePath);
-			message = new MimeMessage(null, new ByteArrayInputStream(EmailConverter.outlookMsgToEML(new FileInputStream(emailFilePath)).getBytes()));
+			message = new MimeMessage(null, new ByteArrayInputStream(EmailConverter.outlookMsgToEML(new FileInputStream(emailFilePath)).getBytes(StandardCharsets.UTF_8)));
 		} else {
 			Logger.debug("Read eml file from %s", emailFilePath);
 			message = new MimeMessage(null, new FileInputStream(emailFilePath));
