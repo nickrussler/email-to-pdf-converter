@@ -16,47 +16,24 @@
 
 package gui;
 
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.EventQueue;
-import java.awt.Font;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import cli.Main;
+import com.google.common.base.Strings;
+import com.google.common.io.Files;
 
-import javax.swing.ButtonGroup;
-import javax.swing.DefaultListModel;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-
-import cli.Main;
-
-import com.google.common.base.Strings;
-import com.google.common.io.Files;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Main Window GUI Class.
@@ -119,7 +96,7 @@ public class MainWindow {
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setBounds(10, 11, 507, 210);
 		frmEmlToPdf.getContentPane().add(scrollPane);
-		scrollPane.setBorder(new TitledBorder(null, "EML Files", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		scrollPane.setBorder(new TitledBorder(null, "Email Files", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		scrollPane.setBackground(Color.WHITE);
 
 		final JList<String> list = new JList<String>();
@@ -164,7 +141,7 @@ public class MainWindow {
 						@Override
 						public void run() {
 							for (File f : Files.fileTraverser().depthFirstPreOrder(dirChooser.getSelectedFile())) {
-								if (f.getName().endsWith(".eml")) {
+								if (f.getName().endsWith(".eml") || f.getName().endsWith(".msg")) {
 									listModel.addElement(f.getAbsolutePath());
 								}
 							}
@@ -356,7 +333,7 @@ public class MainWindow {
 	}
 
 	/**
-	 * Start converting the eml files.
+	 * Start converting the email files.
 	 */
 	private void startConversion(List<String> l, boolean showHeaders, String proxy, boolean extractAttachments) {
 		try {

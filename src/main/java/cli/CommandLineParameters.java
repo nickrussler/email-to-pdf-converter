@@ -16,20 +16,20 @@
 
 package cli;
 
+import com.beust.jcommander.Parameter;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.beust.jcommander.Parameter;
 
 /**
  * JavaBean which holds the CLI params.
  * @author Nick Russler
  */
 public class CommandLineParameters {
-	@Parameter(description = "<EML-File>", variableArity = true)
+	@Parameter(description = "<email-file>", variableArity = true)
 	private List<String> files = new ArrayList<>();
 
-	@Parameter(names = {"-o", "--output-filepath"}, description = "Filepath of the produced PDF document. If this option is ommited the PDF will be placed alongside the EML File.")
+	@Parameter(names = {"-o", "--output-filepath"}, description = "Filepath of the produced PDF document. If this option is ommited the PDF will be placed alongside the email File.")
 	private String output;
 
 	@Parameter(names = {"-p", "--proxy"}, description = "Proxy (e.g. \"http://10.64.1.74:81\"). If \"auto\" is supplied the default system proxy will be used.")

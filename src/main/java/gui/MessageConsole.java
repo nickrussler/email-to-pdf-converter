@@ -1,12 +1,12 @@
 /*
  * Copyright 2016 Nick Russler
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,19 +16,13 @@
 
 package gui;
 
-import java.awt.Color;
+import javax.swing.*;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.*;
+import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-
-import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
 
 /**
  * Create a simple console to display text messages.
@@ -55,7 +49,7 @@ public class MessageConsole {
 	/*
 	 * Use the text component specified as a simply console to display text
 	 * messages.
-	 * 
+	 *
 	 * The messages can either be appended to the end of the console or inserted
 	 * as the first line of the console.
 	 */
@@ -107,7 +101,7 @@ public class MessageConsole {
 	/*
 	 * To prevent memory from being used up you can control the number of lines
 	 * to display in the console
-	 * 
+	 *
 	 * This number can be dynamically changed, but the console will only be
 	 * updated the next time the Document is updated.
 	 */
@@ -160,9 +154,9 @@ public class MessageConsole {
 		/*
 		 * Override this method to intercept the output text. Each line of text
 		 * output will actually involve invoking this method twice:
-		 * 
+		 *
 		 * a) for the actual text message b) for the newLine string
-		 * 
+		 *
 		 * The message will be treated differently depending on whether the line
 		 * will be appended or inserted into the Document
 		 */
@@ -186,7 +180,7 @@ public class MessageConsole {
 		/*
 		 * We don't want to have blank lines in the Document. The first line
 		 * added will simply be the message. For additional lines it will be:
-		 * 
+		 *
 		 * newLine + message
 		 */
 		private void handleAppend(String message) {
@@ -210,7 +204,7 @@ public class MessageConsole {
 		/*
 		 * We don't want to merge the new message with the existing message so
 		 * the line will be inserted as:
-		 * 
+		 *
 		 * message + newLine
 		 */
 		private void handleInsert(String message) {

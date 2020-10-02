@@ -40,6 +40,9 @@ dependencies {
     implementation 'com.beust:jcommander:1.78'
     implementation 'org.apache.tika:tika-core:1.24.1'
     implementation 'com.github.markusbernhardt:proxy-vole:1.0.5'
+    implementation 'org.simplejavamail:simple-java-mail:6.4.3'
+    implementation 'org.simplejavamail:outlook-module:6.4.3'
+    implementation 'org.slf4j:slf4j-simple:1.7.30'
 
     testImplementation 'junit:junit:4.+'
     testImplementation 'org.hamcrest:hamcrest-all:1.+'

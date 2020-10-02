@@ -1,6 +1,6 @@
 ## EML to PDF Converter (Email to PDF Converter) [![Actions Status](https://github.com/nickrussler/eml-to-pdf-converter/workflows/Check,%20Build/badge.svg)](https://github.com/nickrussler/eml-to-pdf-converter/actions)
 
-This software can be used to convert eml files (emails as plain text in MIME format) to pdf files. It can be used as a library, command line tool or desktop application with its GUI.
+This software can be used to convert email files (eml or msg) to pdf files. It can be used as a library, command line tool or desktop application with its GUI.
 
 The conversion is done by parsing (and cleaning) the mime/structure, converting it to html and then using [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) to convert the generated html to a pdf file.
 
@@ -18,7 +18,7 @@ If you want to use the jar (e.g. for a non Windows OS) you need the [wkhtmltopdf
 
 ### Commandline Interface
 ```
-Usage: EMLtoPDFConverter [options] <EML-File>
+Usage: EMLtoPDFConverter [options] <email-file>
   Options:
     -d, --debug
       Debug mode
@@ -40,7 +40,7 @@ Usage: EMLtoPDFConverter [options] <EML-File>
       Default: false
     -o, --output-filepath
       Filepath of the produced PDF document. If this option is ommited the PDF
-      will be placed alongside the EML File.
+      will be placed alongside the email File.
     -s, --page-size
       Set wkhtmltopdf paper size to: A4, Letter, etc. (default A4)
       Default: A4

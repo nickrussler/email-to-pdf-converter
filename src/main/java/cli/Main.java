@@ -16,29 +16,24 @@
 
 package cli;
 
+import com.beust.jcommander.JCommander;
+import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import gui.MainWindow;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 import mimeparser.MimeMessageConverter;
 import util.HttpUtils;
 import util.LogLevel;
 import util.Logger;
 
-import com.beust.jcommander.JCommander;
-import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
-import com.google.common.io.Files;
+import java.io.File;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Commandline tool to convert an eml to html and pdf.
+ * Commandline tool to convert an email (eml, msg) to html and pdf.
  * @author Nick Russler
  */
 public class Main {
@@ -76,7 +71,7 @@ public class Main {
 		}
 
 		if (cli.getFiles().isEmpty()) {
-			Logger.error("Please provide the path of an EML file.");
+			Logger.error("Please provide the path of an email (eml, msg) file.");
 			jCmd.usage();
 			return;
 		}
@@ -84,7 +79,7 @@ public class Main {
 		String in = cli.getFiles().get(0);
 
 		if (!(new File(in).exists())) {
-			Logger.error("Input EML file %s could not be found!", in);
+			Logger.error("Input email file %s could not be found!", in);
 			return;
 		}
 
@@ -127,7 +122,7 @@ public class Main {
 		try {
 			MimeMessageConverter.convertToPdf(in, out, cli.isHideHeaders(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);
 		} catch (Exception e) {
-			Logger.error("The eml could not be converted. Error: %s", Throwables.getStackTraceAsString(e));
+			Logger.error("The email could not be converted. Error: %s", Throwables.getStackTraceAsString(e));
 		}
 	}
 }

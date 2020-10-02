@@ -16,6 +16,23 @@
 
 package mimeparser;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
+import com.google.common.html.HtmlEscapers;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
+import com.google.common.io.Resources;
+import org.apache.tika.mime.MimeTypes;
+import org.simplejavamail.converter.EmailConverter;
+import util.LogLevel;
+import util.Logger;
+import util.StringReplacer;
+import util.StringReplacerCallback;
+
+import javax.mail.Part;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeUtility;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,32 +40,12 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.mail.Part;
-import javax.mail.internet.MailDateFormat;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeUtility;
-
-import org.apache.tika.mime.MimeTypes;
-
-import util.LogLevel;
-import util.Logger;
-import util.StringReplacer;
-import util.StringReplacerCallback;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
-import com.google.common.html.HtmlEscapers;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
-
 /**
- * Converts eml files into pdf files.
+ * Converts email (eml, msg) files into pdf files.
  * @author Nick Russler
  */
 public class MimeMessageConverter {
@@ -112,14 +109,20 @@ public class MimeMessageConverter {
 	}
 
 	/**
-	 * Convert an EML file to PDF.
+	 * Convert an email (eml, msg) file to PDF.
 	 * @throws Exception
 	 */
-	public static void convertToPdf(String emlPath, String pdfOutputPath, boolean hideHeaders, boolean extractAttachments, String attachmentsdir, List<String> extParams) throws Exception {
-		Logger.info("Start converting %s to %s", emlPath, pdfOutputPath);
+	public static void convertToPdf(String emailFilePath, String pdfOutputPath, boolean hideHeaders, boolean extractAttachments, String attachmentsdir, List<String> extParams) throws Exception {
+		Logger.info("Start converting %s to %s", emailFilePath, pdfOutputPath);
 
-		Logger.debug("Read eml file from %s", emlPath);
-		final MimeMessage message = new MimeMessage(null, new FileInputStream(emlPath));
+		final MimeMessage message;
+		if (emailFilePath.toLowerCase().endsWith(".msg")) {
+			Logger.debug("Read msg file from %s, convert it to eml", emailFilePath);
+			message = new MimeMessage(null, new ByteArrayInputStream(EmailConverter.outlookMsgToEML(new FileInputStream(emailFilePath)).getBytes()));
+		} else {
+			Logger.debug("Read eml file from %s", emailFilePath);
+			message = new MimeMessage(null, new FileInputStream(emailFilePath));
+		}
 
 		/* ######### Parse Header Fields ######### */
 		Logger.debug("Read and decode header fields");
@@ -164,7 +167,7 @@ public class MimeMessageConverter {
 		}
 
 		/* ######### Parse the mime structure ######### */
-		Logger.info("Mime Structure of %s:\n%s", emlPath, MimeMessageParser.printStructure(message));
+		Logger.info("Mime Structure of %s:\n%s", emailFilePath, MimeMessageParser.printStructure(message));
 
 		Logger.debug("Find the main message body");
 		MimeObjectEntry<String> bodyEntry = MimeMessageParser.findBodyPart(message);
@@ -234,7 +237,7 @@ public class MimeMessageConverter {
 			}
 		}
 
-		Logger.debug("Successfully parsed the .eml and converted it into html:");
+		Logger.debug("Successfully parsed the email and converted it into html:");
 
 		Logger.debug("---------------Result-------------");
 		Logger.debug("Subject: %s", subject);

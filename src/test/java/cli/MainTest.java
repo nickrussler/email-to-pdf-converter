@@ -143,6 +143,31 @@ public class MainTest {
 	}
 
 	@Test
+	public void main_msg_htmlMessage() throws IOException, URISyntaxException {
+		File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+		String msgFilePath = new File(MainTest.class.getClassLoader().getResource("msg/testHtml.msg").toURI()).getAbsolutePath();
+
+		String[] args = new String[] {
+				"-o", tmpPdf.getAbsolutePath(),
+				msgFilePath
+		};
+
+		LogLevel old = Logger.level;
+		Logger.level = LogLevel.Error;
+
+		Main.main(args);
+
+		Logger.level = old;
+
+		assertTrue(tmpPdf.exists());
+		// assertTrue(tmpPdf.length() > 0);
+
+		if (!tmpPdf.delete()) {
+			tmpPdf.deleteOnExit();
+		}
+	}
+
+	@Test
 	public void main_attachments() throws IOException, URISyntaxException {
 		File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
 		String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachments.eml").toURI()).getAbsolutePath();

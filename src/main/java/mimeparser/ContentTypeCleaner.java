@@ -16,20 +16,18 @@
 
 package mimeparser;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.util.regex.Pattern;
+import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
+import util.Logger;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.ContentType;
 import javax.mail.internet.MimeUtility;
 import javax.mail.internet.ParseException;
-
-import util.Logger;
-
-import com.google.common.base.Strings;
-import com.google.common.io.ByteStreams;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.regex.Pattern;
 
 /**
  * Sanitizes contentType strings.

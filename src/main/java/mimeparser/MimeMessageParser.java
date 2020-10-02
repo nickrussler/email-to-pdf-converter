@@ -15,24 +15,23 @@
  */
 
 package mimeparser;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+
+import com.google.common.base.Strings;
+import com.google.common.io.BaseEncoding;
+import com.google.common.io.ByteStreams;
+import com.sun.mail.util.BASE64DecoderStream;
+import util.Logger;
 
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
 import javax.mail.internet.ContentDisposition;
 import javax.mail.internet.ContentType;
-
-import util.Logger;
-
-import com.google.common.base.Strings;
-import com.google.common.io.BaseEncoding;
-import com.google.common.io.ByteStreams;
-import com.sun.mail.util.BASE64DecoderStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Utility class to parse a MimeMessage.
