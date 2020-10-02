@@ -1,4 +1,4 @@
-## EML to PDF Converter (Email to PDF Converter) [![Actions Status](https://github.com/nickrussler/eml-to-pdf-converter/workflows/Check,%20Build/badge.svg)](https://github.com/nickrussler/eml-to-pdf-converter/actions)
+## Email to PDF Converter (formely EML to PDF Converter) [![Actions Status](https://github.com/nickrussler/email-to-pdf-converter/workflows/Check,%20Build/badge.svg)](https://github.com/nickrussler/email-to-pdf-converter/actions)
 
 This software can be used to convert email files (eml or msg) to pdf files. It can be used as a library, command line tool or desktop application with its GUI.
 
@@ -7,7 +7,7 @@ The conversion is done by parsing (and cleaning) the mime/structure, converting 
 It also handles inline images, corrupt mime headers and can use a proxy.
 
 ### Download
-You can download the lates binaries [**here**](//github.com/nickrussler/eml-to-pdf-converter/releases/latest).
+You can download the lates binaries [**here**](//github.com/nickrussler/email-to-pdf-converter/releases/latest).
 
 There you can find a Windows setup.exe and a jar.<br>
 If you want to use the jar (e.g. for a non Windows OS) you need the [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH.
