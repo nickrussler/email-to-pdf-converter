@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.html.HtmlEscapers;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.CharSink;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import org.apache.tika.mime.MimeTypes;
@@ -280,7 +281,7 @@ public class MimeMessageConverter {
 				headers += String.format(HEADER_FIELD_TEMPLATE, "Date", HtmlEscapers.htmlEscaper().escape(sentDateStr));
 			}
 
-			Files.write(String.format(tmpHtmlHeaderStr, headers), tmpHtmlHeader, StandardCharsets.UTF_8);
+			Files.asCharSink(tmpHtmlHeader, StandardCharsets.UTF_8).write(String.format(tmpHtmlHeaderStr, headers));
 
 			// Append this script tag dirty to the bottom
 			URL contentScriptResource = MimeMessageConverter.class.getClassLoader().getResource("contentScript.js");
@@ -289,7 +290,7 @@ public class MimeMessageConverter {
 
 		File tmpHtml = File.createTempFile("emailtopdf", ".html");
 		Logger.debug("Write html to temporary file %s", tmpHtml.getAbsolutePath());
-		Files.write(htmlBody, tmpHtml, Charset.forName(charsetName));
+		Files.asCharSink(tmpHtml, Charset.forName(charsetName)).write(htmlBody);
 
 		File pdf = new File(pdfOutputPath);
 		Logger.debug("Write pdf to %s", pdf.getAbsolutePath());
