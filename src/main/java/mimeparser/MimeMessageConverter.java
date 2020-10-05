@@ -18,18 +18,19 @@ package mimeparser;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.html.HtmlEscapers;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import org.apache.tika.mime.MimeTypes;
+import org.simplejavamail.api.email.AttachmentResource;
 import org.simplejavamail.converter.EmailConverter;
 import util.LogLevel;
 import util.Logger;
 import util.StringReplacer;
 import util.StringReplacerCallback;
 
-import javax.mail.Part;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
 import java.io.ByteArrayInputStream;
@@ -332,41 +333,49 @@ public class MimeMessageConverter {
 
 			Logger.info("Extract attachments to %s", attachmentDir.getAbsolutePath());
 
-			List<Part> attachmentParts = MimeMessageParser.getAttachments(message);
-			Logger.debug("Found %s attachments", attachmentParts.size());
-			for (int i = 0; i < attachmentParts.size(); i++) {
-				Logger.debug("Process Attachment %s", i);
+			List<AttachmentResource> attachments = EmailConverter.mimeMessageToEmail(message).getAttachments();
 
-				Part part = attachmentParts.get(i);
-
-				String attachmentFilename = null;
+			Logger.debug("Found %s attachments", attachments.size());
+			for (int i = 0; i < attachments.size(); i++) {
+				File attachFile = null;
 				try {
-					attachmentFilename = part.getFileName();
-				} catch (Exception e) {
-					// ignore this error
-				}
+					Logger.debug("Process Attachment %s", i);
 
-				File attachFile;
-				if (!Strings.isNullOrEmpty(attachmentFilename)) {
-					attachFile = new File(attachmentDir, attachmentFilename);
-				} else {
-					String extension = "";
+					AttachmentResource attachmentResource = attachments.get(i);
 
-					// try to find at least the file extension via the mime type
+					String attachmentFilename = null;
 					try {
-						extension = MimeTypes.getDefaultMimeTypes().forName(part.getContentType()).getExtension();
+						attachmentFilename = attachmentResource.getDataSource().getName();
 					} catch (Exception e) {
 						// ignore this error
 					}
 
-					Logger.debug("Attachment %s did not hold any name, use random name", i);
-					attachFile = File.createTempFile("nameless-", extension, attachmentDir);
-				}
+					if (!Strings.isNullOrEmpty(attachmentFilename)) {
+						attachFile = new File(attachmentDir, attachmentFilename);
+					} else {
+						String extension = "";
 
-				Logger.debug("Save Attachment %s to %s", i, attachFile.getAbsolutePath());
-				FileOutputStream fos = new FileOutputStream(attachFile);
-				ByteStreams.copy(part.getInputStream(), fos);
-				fos.close();
+						// try to find at least the file extension via the mime type
+						try {
+							extension = MimeTypes.getDefaultMimeTypes().forName(attachmentResource.getDataSource().getContentType()).getExtension();
+						} catch (Exception e) {
+							// ignore this error
+						}
+
+						Logger.debug("Attachment %s did not hold any name, use random name", i);
+						attachFile = File.createTempFile("nameless-", extension, attachmentDir);
+					}
+
+					try (FileOutputStream fos = new FileOutputStream(attachFile)) {
+						ByteStreams.copy(attachmentResource.getDataSourceInputStream(), fos);
+					}
+
+					Logger.debug("Saved Attachment %s to %s", i, attachFile.getAbsolutePath());
+
+					attachFile = null;
+				} catch (Exception e) {
+					Logger.error("Could not save attachment to %s. Error: %s", attachFile, Throwables.getStackTraceAsString(e));
+				}
 			}
 		}
 
