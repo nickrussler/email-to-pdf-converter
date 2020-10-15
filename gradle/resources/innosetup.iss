@@ -38,9 +38,7 @@ Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescrip
 Source: "..\..\build\libs\EmailConverter.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\build\libs\EmailConverterConsole.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\build\libs\emailconverter.jar"; DestDir: "{app}"; Flags: ignoreversion
-Source: "wkhtmltopdf\libgcc_s_sjlj-1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "wkhtmltopdf\libstdc++-6.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "wkhtmltopdf\libwinpthread-1.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "wkhtmltopdf\wkhtmltopdf-source.7z"; DestDir: "{app}"; Flags: ignoreversion
 Source: "wkhtmltopdf\wkhtmltopdf.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
