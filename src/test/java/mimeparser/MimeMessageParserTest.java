@@ -40,52 +40,52 @@ import org.junit.Test;
  * @author Nick Russler
  */
 public class MimeMessageParserTest {
-	private static MimeMessage messagePlain;
-	private static MimeMessage messageComplex;
+    private static MimeMessage messagePlain;
+    private static MimeMessage messageComplex;
 
 
-	@BeforeClass
-	public static void setup() throws FileNotFoundException, MessagingException, URISyntaxException {
-		ClassLoader cl = MimeMessageParserTest.class.getClassLoader();
+    @BeforeClass
+    public static void setup() throws FileNotFoundException, MessagingException, URISyntaxException {
+        ClassLoader cl = MimeMessageParserTest.class.getClassLoader();
 
-		messagePlain = new MimeMessage(null, new FileInputStream(new File(cl.getResource("eml/testPlain.eml").toURI())));
-		messageComplex = new MimeMessage(null, new FileInputStream(new File(cl.getResource("eml/testHtml.eml").toURI())));
-	}
+        messagePlain = new MimeMessage(null, new FileInputStream(new File(cl.getResource("eml/testPlain.eml").toURI())));
+        messageComplex = new MimeMessage(null, new FileInputStream(new File(cl.getResource("eml/testHtml.eml").toURI())));
+    }
 
-	@Test
-	public void printStructure_foundAllPartsPlain() throws Exception {
-		assertThat(MimeMessageParser.printStructure(messagePlain), containsString("text/plain"));
-	}
+    @Test
+    public void printStructure_foundAllPartsPlain() throws Exception {
+        assertThat(MimeMessageParser.printStructure(messagePlain), containsString("text/plain"));
+    }
 
-	@Test
-	public void printStructure_foundAllPartsComplex() throws Exception {
-		String structure = MimeMessageParser.printStructure(messageComplex);
+    @Test
+    public void printStructure_foundAllPartsComplex() throws Exception {
+        String structure = MimeMessageParser.printStructure(messageComplex);
 
-		assertThat(structure, containsString("multipart/mixed"));
-		assertThat(structure, containsString("multipart/related"));
-		assertThat(structure, containsString("multipart/alternative"));
+        assertThat(structure, containsString("multipart/mixed"));
+        assertThat(structure, containsString("multipart/related"));
+        assertThat(structure, containsString("multipart/alternative"));
 
-		assertThat(structure, containsString("text/plain"));
-		assertThat(structure, containsString("text/html"));
+        assertThat(structure, containsString("text/plain"));
+        assertThat(structure, containsString("text/html"));
 
-		assertThat(structure, containsString("image/gif"));
-	}
+        assertThat(structure, containsString("image/gif"));
+    }
 
-	@Test
-	public void findBodyPart_foundMainBodyInPlain() throws Exception {
-		assertThat("Hallo, Guten Tag!", equalTo(MimeMessageParser.findBodyPart(messagePlain).getEntry()));
-	}
+    @Test
+    public void findBodyPart_foundMainBodyInPlain() throws Exception {
+        assertThat("Hallo, Guten Tag!", equalTo(MimeMessageParser.findBodyPart(messagePlain).getEntry()));
+    }
 
-	@Test
-	public void findBodyPart_foundMainBodyInComplex() throws Exception {
-		assertThat("text/html", equalTo(MimeMessageParser.findBodyPart(messageComplex).getContentType().getBaseType()));
-	}
+    @Test
+    public void findBodyPart_foundMainBodyInComplex() throws Exception {
+        assertThat("text/html", equalTo(MimeMessageParser.findBodyPart(messageComplex).getContentType().getBaseType()));
+    }
 
-	@Test
-	public void getInlineImageMap_foundImagesInComplex() throws Exception {
-		HashMap<String, MimeObjectEntry<String>> inlineImageMap = MimeMessageParser.getInlineImageMap(messageComplex);
+    @Test
+    public void getInlineImageMap_foundImagesInComplex() throws Exception {
+        HashMap<String, MimeObjectEntry<String>> inlineImageMap = MimeMessageParser.getInlineImageMap(messageComplex);
 
-		assertThat(inlineImageMap.get("<ae0357e57f04b8347f7621662cb63855.gif>"), is(not(nullValue())));
-		assertThat(inlineImageMap.get("<4c837ed463ad29c820668e835a270e8a.gif>"), is(not(nullValue())));
-	}
+        assertThat(inlineImageMap.get("<ae0357e57f04b8347f7621662cb63855.gif>"), is(not(nullValue())));
+        assertThat(inlineImageMap.get("<4c837ed463ad29c820668e835a270e8a.gif>"), is(not(nullValue())));
+    }
 }

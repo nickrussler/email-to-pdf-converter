@@ -18,7 +18,7 @@ If you want to use the jar (e.g. for a non Windows OS) you need the [wkhtmltopdf
 
 ### Commandline Interface
 ```
-Usage: EMLtoPDFConverter [options] <email-file>
+Usage: EmailToPDFConverter [options] <email-file>
   Options:
     -d, --debug
       Debug mode

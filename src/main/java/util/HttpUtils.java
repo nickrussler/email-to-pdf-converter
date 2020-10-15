@@ -32,63 +32,63 @@ import java.util.List;
  * @author Nick Russler
  */
 public class HttpUtils {
-	/**
-	 * Find the default proxy.
-	 * @return default proxy
-	 */
-	public static Proxy getDefaultProxy() {
-		ProxySearch proxySearch = new ProxySearch();
-		proxySearch.addStrategy(Strategy.OS_DEFAULT);
-		proxySearch.addStrategy(Strategy.JAVA);
-		proxySearch.addStrategy(Strategy.BROWSER);
-		ProxySelector proxySelector = proxySearch.getProxySelector();
+    /**
+     * Find the default proxy.
+     * @return default proxy
+     */
+    public static Proxy getDefaultProxy() {
+        ProxySearch proxySearch = new ProxySearch();
+        proxySearch.addStrategy(Strategy.OS_DEFAULT);
+        proxySearch.addStrategy(Strategy.JAVA);
+        proxySearch.addStrategy(Strategy.BROWSER);
+        ProxySelector proxySelector = proxySearch.getProxySelector();
 
-		ProxySelector.setDefault(proxySelector);
-		URI home = URI.create("http://www.google.com");
-		List<Proxy> proxyList = proxySelector.select(home);
-		if (proxyList != null && !proxyList.isEmpty()) {
-			for (Proxy proxy : proxyList) {
-				return proxy;
-			}
-		}
+        ProxySelector.setDefault(proxySelector);
+        URI home = URI.create("http://www.google.com");
+        List<Proxy> proxyList = proxySelector.select(home);
+        if (proxyList != null && !proxyList.isEmpty()) {
+            for (Proxy proxy : proxyList) {
+                return proxy;
+            }
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	/**
-	 * Makes a HTTP Post.
-	 * @param params
-	 * @return Response string
-	 */
-	public static String postRequest(String url, String params) {
-		try {
-			URL urlObj = new URL(url);
-			HttpURLConnection conn = (HttpURLConnection) urlObj.openConnection(getDefaultProxy());
-			conn.setDoOutput(true);
+    /**
+     * Makes a HTTP Post.
+     * @param params
+     * @return Response string
+     */
+    public static String postRequest(String url, String params) {
+        try {
+            URL urlObj = new URL(url);
+            HttpURLConnection conn = (HttpURLConnection) urlObj.openConnection(getDefaultProxy());
+            conn.setDoOutput(true);
 
-			OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8);
-			writer.write(params);
-			writer.close();
+            OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream(), StandardCharsets.UTF_8);
+            writer.write(params);
+            writer.close();
 
-			return CharStreams.toString(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
-		} catch (Exception e) {
-			return "ERROR: " + Throwables.getStackTraceAsString(e);
-		}
-	}
+            return CharStreams.toString(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            return "ERROR: " + Throwables.getStackTraceAsString(e);
+        }
+    }
 
-	/**
-	 * Makes a HTTP Get.
-	 * @return Response string
-	 */
-	public static String getRequest(String url) {
-		try {
-			URL urlObj = new URL(url);
-			HttpURLConnection conn = (HttpURLConnection) urlObj.openConnection(getDefaultProxy());
-			conn.setDoOutput(true);
+    /**
+     * Makes a HTTP Get.
+     * @return Response string
+     */
+    public static String getRequest(String url) {
+        try {
+            URL urlObj = new URL(url);
+            HttpURLConnection conn = (HttpURLConnection) urlObj.openConnection(getDefaultProxy());
+            conn.setDoOutput(true);
 
-			return CharStreams.toString(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
-		} catch (Exception e) {
-			return "ERROR: " + Throwables.getStackTraceAsString(e);
-		}
-	}
+            return CharStreams.toString(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            return "ERROR: " + Throwables.getStackTraceAsString(e);
+        }
+    }
 }

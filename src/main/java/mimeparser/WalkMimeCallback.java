@@ -22,5 +22,5 @@ import javax.mail.Part;
  * @author Nick Russler
  */
 public interface WalkMimeCallback {
-	void walkMimeCallback(Part p, int level) throws Exception;
+    void walkMimeCallback(Part p, int level) throws Exception;
 }

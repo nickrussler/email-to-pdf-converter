@@ -22,5 +22,5 @@ import java.util.regex.Matcher;
  * Interface for the Recursive Callback.
  */
 public interface StringReplacerCallback {
-	String replace(Matcher match) throws Exception;
+    String replace(Matcher match) throws Exception;
 }

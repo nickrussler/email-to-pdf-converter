@@ -21,8 +21,8 @@ version = gitVersionDetails.lastTag
 jar {
     manifest {
         attributes 'Main-Class': 'cli.Main',
-                'Implementation-Title': 'EML to PDF Converter',
-                'Implementation-Version': version + "+${gitVersionDetails.branchName}.${gitVersionDetails.gitHash}"
+                'Implementation-Title': 'Email to PDF Converter',
+                'Implementation-Version': archiveVersion.get() + "+${gitVersionDetails.branchName}.${gitVersionDetails.gitHash}"
     }
 }
 

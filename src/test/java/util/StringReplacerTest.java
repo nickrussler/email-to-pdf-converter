@@ -30,53 +30,53 @@ import org.junit.Test;
  */
 public class StringReplacerTest {
 
-	@Test
-	public void replace_replaceSingleChar() throws Exception {
-		String expected = "abcabcabc";
-		String result;
+    @Test
+    public void replace_replaceSingleChar() throws Exception {
+        String expected = "abcabcabc";
+        String result;
 
-		result = StringReplacer.replace("abdabdabd", Pattern.compile("d"), new StringReplacerCallback() {
-			@Override
-			public String replace(Matcher match) throws Exception {
-				return "c";
-			}
-		});
+        result = StringReplacer.replace("abdabdabd", Pattern.compile("d"), new StringReplacerCallback() {
+            @Override
+            public String replace(Matcher match) throws Exception {
+                return "c";
+            }
+        });
 
-		assertThat(expected, equalTo(result));
-	}
+        assertThat(expected, equalTo(result));
+    }
 
-	@Test
-	public void replace_replaceMultipleChars() throws Exception {
-		String expected = "test17test";
-		String result;
+    @Test
+    public void replace_replaceMultipleChars() throws Exception {
+        String expected = "test17test";
+        String result;
 
-		result = StringReplacer.replace("test269test", Pattern.compile("\\d+"), new StringReplacerCallback() {
-			@Override
-			public String replace(Matcher match) throws Exception {
-				int x = 0;
-				for (int i = 0; i < match.group().length(); i++) {
-					x += Integer.parseInt("" + match.group().charAt(i));
-				}
+        result = StringReplacer.replace("test269test", Pattern.compile("\\d+"), new StringReplacerCallback() {
+            @Override
+            public String replace(Matcher match) throws Exception {
+                int x = 0;
+                for (int i = 0; i < match.group().length(); i++) {
+                    x += Integer.parseInt("" + match.group().charAt(i));
+                }
 
-				return "" + x;
-			}
-		});
+                return "" + x;
+            }
+        });
 
-		assertThat(expected, equalTo(result));
-	}
+        assertThat(expected, equalTo(result));
+    }
 
-	@Test
-	public void replace_obeyNewlines() throws Exception {
-		String expected = "ab\nc";
-		String result;
+    @Test
+    public void replace_obeyNewlines() throws Exception {
+        String expected = "ab\nc";
+        String result;
 
-		result = StringReplacer.replace(expected, Pattern.compile("a.*b.*c"), new StringReplacerCallback() {
-			@Override
-			public String replace(Matcher match) throws Exception {
-				return "";
-			}
-		});
+        result = StringReplacer.replace(expected, Pattern.compile("a.*b.*c"), new StringReplacerCallback() {
+            @Override
+            public String replace(Matcher match) throws Exception {
+                return "";
+            }
+        });
 
-		assertThat(expected, equalTo(result));
-	}
+        assertThat(expected, equalTo(result));
+    }
 }
