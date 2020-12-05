@@ -31,7 +31,7 @@ import org.junit.Test;
 public class ContentTypeCleanerTest {
     @Test
     public void cleanContentType_empty() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(""));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, ""));
 
         assertThat(ContentTypeCleaner.DEFAULT_BASETYPE, equalToIgnoringCase(contentType.getBaseType()));
         assertThat(ContentTypeCleaner.DEFAULT_CHARSET, equalToIgnoringCase(contentType.getParameter("charset")));
@@ -39,7 +39,7 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_semicolonSequenceInParameterList() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType("text/html; ;;;; ;;;   charset=\"utf-16\"  ;;;;"));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "text/html; ;;;; ;;;   charset=\"utf-16\"  ;;;;"));
 
         assertThat("text/html", equalToIgnoringCase(contentType.getBaseType()));
         assertThat("utf-16", equalToIgnoringCase(contentType.getParameter("charset")));
@@ -47,7 +47,7 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_colonInsteadOfEqualSign() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType("text/html; charset:\"utf-16\""));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "text/html; charset:\"utf-16\""));
 
         assertThat("text/html", equalToIgnoringCase(contentType.getBaseType()));
         assertThat("utf-16", equalToIgnoringCase(contentType.getParameter("charset")));
@@ -55,7 +55,7 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_semicolonSequenceInParameterListAndColonInsteadOfEqualSign() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType("text/html; ;;;; charset:\"utf-16\" ;;;;"));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "text/html; ;;;; charset:\"utf-16\" ;;;;"));
 
         assertThat("text/html", equalToIgnoringCase(contentType.getBaseType()));
         assertThat("utf-16", equalToIgnoringCase(contentType.getParameter("charset")));
@@ -63,7 +63,7 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_typeAndCharsetMissing() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType("%%% text/html;"));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "%%% text/html;"));
 
         assertThat("text/html", equalToIgnoringCase(contentType.getBaseType()));
         assertThat(ContentTypeCleaner.DEFAULT_CHARSET, equalToIgnoringCase(contentType.getParameter("charset")));
@@ -71,7 +71,7 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_typeAndCharsetSomewhereHtml() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType("text/html; utf-16"));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "text/html; utf-16"));
 
         assertThat("text/html", equalToIgnoringCase(contentType.getBaseType()));
         assertThat("utf-16", equalToIgnoringCase(contentType.getParameter("charset")));
@@ -79,7 +79,7 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_typeAndCharsetSomewherePlainAndCharsetAlias() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType("text/plain; latin1"));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "text/plain; latin1"));
 
         assertThat("text/plain", equalToIgnoringCase(contentType.getBaseType()));
         assertThat("ISO-8859-1", equalToIgnoringCase(contentType.getParameter("charset")));
@@ -87,7 +87,7 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_quotedPrintable() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType("text/html; charset=3Dutf-16"));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "text/html; charset=3Dutf-16"));
 
         assertThat("text/html", equalToIgnoringCase(contentType.getBaseType()));
         assertThat("utf-16", equalToIgnoringCase(contentType.getParameter("charset")));
@@ -95,7 +95,7 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_noCharset() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType("text/html;"));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "text/html;"));
 
         assertThat("text/html", equalToIgnoringCase(contentType.getBaseType()));
         assertThat(ContentTypeCleaner.DEFAULT_CHARSET, equalToIgnoringCase(contentType.getParameter("charset")));
@@ -103,7 +103,7 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_unknownCharset() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType("text/html; charset=ABCDEF"));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "text/html; charset=ABCDEF"));
 
         assertThat("text/html", equalToIgnoringCase(contentType.getBaseType()));
         assertThat(ContentTypeCleaner.DEFAULT_CHARSET, equalToIgnoringCase(contentType.getParameter("charset")));
@@ -111,7 +111,7 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_brokenContentType() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType("BROKEN_STRING"));
+        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "BROKEN_STRING"));
 
         assertThat(ContentTypeCleaner.DEFAULT_BASETYPE, equalToIgnoringCase(contentType.getBaseType()));
         assertThat(ContentTypeCleaner.DEFAULT_CHARSET, equalToIgnoringCase(contentType.getParameter("charset")));

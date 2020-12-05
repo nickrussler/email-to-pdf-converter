@@ -22,6 +22,7 @@ import util.Logger;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.ContentType;
+import javax.mail.internet.MimePart;
 import javax.mail.internet.MimeUtility;
 import javax.mail.internet.ParseException;
 import java.io.ByteArrayInputStream;
@@ -198,11 +199,13 @@ public class ContentTypeCleaner {
 
     /**
      * Attempt to repair the given contentType if broken.
+     *
+     * @param mp MimePart
      * @param contentType ContentType
      * @return fixed contentType String
      * @throws MessagingException
      */
-    public static String cleanContentType(String contentType) throws MessagingException {
+    public static String cleanContentType(MimePart mp, String contentType) throws MessagingException {
         ContentType ct = parseContentType(contentType);
 
         if (ct == null) {
