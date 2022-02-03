@@ -159,7 +159,6 @@ public class MainWindow {
 
         final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setMultiSelectionEnabled(true);
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Message files", "eml", "msg"));
 
         JButton btnAddFile = new JButton("Add File(s)");
         btnAddFile.setIcon(new ImageIcon(MainWindow.class.getResource("/icons/email_add.png")));
