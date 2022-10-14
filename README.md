@@ -6,7 +6,16 @@ The conversion is done by parsing (and cleaning) the mime/structure, converting 
 
 It also handles inline images, corrupt mime headers and can use a proxy.
 
+
+### Prerequisistes
+
+You need :
+
+* a complete jre, not a headless one (on Debian, for example, you need to have `openjdk-11-jre` installed);
+* [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf)needs to be in your $PATH
+
 ### Download
+
 You can download the lates binaries [**here**](//github.com/nickrussler/email-to-pdf-converter/releases/latest).
 
 There you can find a Windows setup.exe and a jar.<br>
