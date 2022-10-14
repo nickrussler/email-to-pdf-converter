@@ -190,9 +190,10 @@ public class MimeMessageConverter {
                     public String replace(Matcher m) throws Exception {
                         MimeObjectEntry<String> base64Entry = inlineImageMap.get("<" + m.group(1) + ">");
 
-                        // found no image for this cid, just return the matches string as it is
+                        // found no image for this cid, just return single " to avoid problem with wkhtmltopdf
                         if (base64Entry == null) {
-                            return m.group();
+                            Logger.warn("CID not found: " + m.group(1));
+                            return "\"";
                         }
 
                         return "data:" + base64Entry.getContentType().getBaseType() + ";base64," + base64Entry.getEntry() + "\"";
