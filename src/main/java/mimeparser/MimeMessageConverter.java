@@ -31,6 +31,7 @@ import util.LogLevel;
 import util.Logger;
 import util.StringReplacer;
 import util.StringReplacerCallback;
+import java.util.HashMap;
 
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
@@ -155,6 +156,20 @@ public class MimeMessageConverter {
             }
         }
 
+        String[] cc = new String[0];
+        String ccRaw = message.getHeader("Cc", null);
+        if (!Strings.isNullOrEmpty(ccRaw)) {
+            try {
+                ccRaw = MimeUtility.unfold(ccRaw);
+                cc = ccRaw.split(",");
+                for (int i = 0; i < cc.length; i++) {
+                    cc[i] = MimeUtility.decodeText(cc[i]);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         String sentDateStr = null;
         try {
             Date sentDate = message.getSentDate();
@@ -247,6 +262,9 @@ public class MimeMessageConverter {
         if (recipients.length > 0) {
             Logger.debug("To: %s", Joiner.on(", ").join(recipients));
         }
+        if (cc.length > 0) {
+            Logger.debug("Cc: %s", Joiner.on(", ").join(cc));
+        }
         Logger.debug("Date: %s", sentDateStr);
         String bodyExcerpt = htmlBody.replace("\n", "").replace("\r", "");
         if (bodyExcerpt.length() >= 60) {
@@ -275,6 +293,10 @@ public class MimeMessageConverter {
 
             if (recipients.length > 0) {
                 headers += String.format(HEADER_FIELD_TEMPLATE, "To", HtmlEscapers.htmlEscaper().escape(Joiner.on(", ").join(recipients)));
+            }
+
+            if (cc.length > 0) {
+                headers += String.format(HEADER_FIELD_TEMPLATE, "Cc", HtmlEscapers.htmlEscaper().escape(Joiner.on(", ").join(cc)));
             }
 
             if (!Strings.isNullOrEmpty(sentDateStr)) {
