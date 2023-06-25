@@ -53,6 +53,9 @@ Usage: EmailToPDFConverter [options] <email-file>
     -s, --page-size
       Set wkhtmltopdf paper size to: A4, Letter, etc. (default A4)
       Default: A4
+    -r, --dpi
+      Set wkhtmltopdf DPI. (default 300)
+      Default: 300
     -p, --proxy
       Proxy (e.g. "http://10.64.1.74:81"). If "auto" is supplied the default
       system proxy will be used.

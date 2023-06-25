@@ -86,7 +86,6 @@ public class MimeMessageConverter {
     private static final Pattern IMG_CID_PLAIN_REGEX = Pattern.compile("\\[cid:(.*?)\\]", Pattern.DOTALL);
 
     private static final String VIEWPORT_SIZE = "2480x3508";
-    private static final int CONVERSION_DPI = 300;
     private static final int IMAGE_QUALITY = 100;
 
     private static final DateFormat DATE_FORMATTER = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG);
@@ -299,7 +298,6 @@ public class MimeMessageConverter {
                 "--viewport-size", VIEWPORT_SIZE,
                 "--enable-local-file-access",
                 // "--disable-smart-shrinking",
-                "--dpi", String.valueOf(CONVERSION_DPI),
                 "--image-quality", String.valueOf(IMAGE_QUALITY),
                 "--encoding", charsetName));
         cmd.addAll(extParams);

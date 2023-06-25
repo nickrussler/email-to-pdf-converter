@@ -119,6 +119,9 @@ public class Main {
         extParams.add("--page-size");
         extParams.add(cli.getPageSize());
 
+        extParams.add("--dpi");
+        extParams.add(cli.getDPI());
+
         try {
             MimeMessageConverter.convertToPdf(in, out, cli.isHideHeaders(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);
         } catch (Exception e) {
