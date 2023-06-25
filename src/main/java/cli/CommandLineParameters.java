@@ -65,6 +65,9 @@ public class CommandLineParameters {
     @Parameter(names = {"-s", "--page-size"}, description = "Set wkhtmltopdf paper size to: A4, Letter, etc. (default A4)")
     private String pageSize = "A4";
 
+    @Parameter(names = {"-r", "--dpi"}, description = "Set wkhtmltopdf DPI. (default 300)")
+    private String dpi = "300";
+
     public List<String> getFiles() {
         return files;
     }
@@ -167,5 +170,13 @@ public class CommandLineParameters {
 
     public void setPageSize(String pageSize) {
         this.pageSize = pageSize;
+    }
+
+    public String getDPI() {
+        return dpi;
+    }
+
+    public void setDPI(String dpi) {
+        this.dpi = dpi;
     }
 }
