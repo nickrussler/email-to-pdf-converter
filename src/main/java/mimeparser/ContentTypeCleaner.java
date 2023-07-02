@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,21 +18,21 @@ package mimeparser;
 
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
-import util.Logger;
-
-import javax.mail.MessagingException;
-import javax.mail.internet.ContentType;
-import javax.mail.internet.MimePart;
-import javax.mail.internet.MimeUtility;
-import javax.mail.internet.ParseException;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
+import javax.mail.MessagingException;
+import javax.mail.internet.ContentType;
+import javax.mail.internet.MimePart;
+import javax.mail.internet.MimeUtility;
+import javax.mail.internet.ParseException;
+import util.Logger;
 
 /**
  * Sanitizes contentType strings.
+ *
  * @author Nick Russler
  */
 public class ContentTypeCleaner {
@@ -44,6 +44,7 @@ public class ContentTypeCleaner {
 
     /**
      * Try to parse the given contentType String into a ContentType instance.
+     *
      * @param contentType
      * @return new ContentType instance, or null if not parsable
      */
@@ -57,6 +58,7 @@ public class ContentTypeCleaner {
 
     /**
      * Try to parse the charset parameter of the ContentType into a Charset instance.
+     *
      * @param contentType
      * @return new Charset instance, or null if not parsable
      */
@@ -70,6 +72,7 @@ public class ContentTypeCleaner {
 
     /**
      * fixes invalid semicolon sequences in the parameter list e.g.: "text/html; ;;;;; ;;;; ;...".
+     *
      * @param contentType ContentType
      * @return cleaned contentType
      */
@@ -79,6 +82,7 @@ public class ContentTypeCleaner {
 
     /**
      * cleans misusage of : instead of = in parameter list e.g.: "text/html; charset:utf-8".
+     *
      * @param contentType ContentType
      * @return cleaned contentType
      */
@@ -88,6 +92,7 @@ public class ContentTypeCleaner {
 
     /**
      * Try to find the base type and charset somewhere in the string.
+     *
      * @param contentType ContentType
      * @return contentType string consisting of the found base type and charset
      */
@@ -137,6 +142,7 @@ public class ContentTypeCleaner {
 
     /**
      * Try to decode the contentType String as quoted-printable String into a ContentType.
+     *
      * @param contentType
      * @return new ContentType instance or null
      */
@@ -154,6 +160,7 @@ public class ContentTypeCleaner {
     /**
      * Check if the contentType can be parsed. If not return a fixed version.
      * When thats not possible return a default contentType string.
+     *
      * @param contentType
      * @return Fixed contentType string or default
      * @throws ParseException
@@ -200,7 +207,7 @@ public class ContentTypeCleaner {
     /**
      * Attempt to repair the given contentType if broken.
      *
-     * @param mp MimePart
+     * @param mp          MimePart
      * @param contentType ContentType
      * @return fixed contentType String
      * @throws MessagingException
@@ -215,7 +222,8 @@ public class ContentTypeCleaner {
         if (ct.getBaseType().equalsIgnoreCase("text/plain") || ct.getBaseType().equalsIgnoreCase("text/html")) {
             Charset charset = parseCharset(ct);
             if (charset == null) {
-                Logger.debug("Charset of the ContentType could not be read, try to decode the contentType as quoted-printable");
+                Logger.debug(
+                        "Charset of the ContentType could not be read, try to decode the contentType as quoted-printable");
 
                 ContentType ctTmp = decodeContentTypeAsQuotedPrintable(contentType);
                 if (parseCharset(ctTmp) != null) {

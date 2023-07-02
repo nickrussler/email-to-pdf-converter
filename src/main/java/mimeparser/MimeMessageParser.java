@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,28 +20,29 @@ import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.ByteStreams;
 import com.sun.mail.util.BASE64DecoderStream;
-import util.Logger;
-
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
-import javax.mail.internet.ContentDisposition;
-import javax.mail.internet.ContentType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.Part;
+import javax.mail.internet.ContentDisposition;
+import javax.mail.internet.ContentType;
+import util.Logger;
 
 /**
  * Utility class to parse a MimeMessage.
+ *
  * @author Nick Russler
  */
 public class MimeMessageParser {
     /***
      * Walk the Mime Structure recursivly and execute the callback on every part.
-     * @param p mime object
-     * @param level of current depth of the part
+     *
+     * @param p        mime object
+     * @param level    of current depth of the part
      * @param callback Object holding the callback function
      * @throws Exception
      */
@@ -58,6 +59,7 @@ public class MimeMessageParser {
 
     /***
      * Print the structure of the Mime object.
+     *
      * @param p Mime object
      * @throws Exception
      */
@@ -86,6 +88,7 @@ public class MimeMessageParser {
 
     /**
      * Get the String Content of a MimePart.
+     *
      * @param p MimePart
      * @return Content as String
      * @throws IOException
@@ -116,6 +119,7 @@ public class MimeMessageParser {
 
     /**
      * Find the main message body, prefering html over plain.
+     *
      * @param p mime object
      * @return the main message body and the corresponding contentType or an empty text/plain
      * @throws Exception
@@ -152,6 +156,7 @@ public class MimeMessageParser {
     /**
      * Get all inline images (images with an Content-Id) as a Hashmap.
      * The key is the Content-Id and all images in all multipart containers are included in the map.
+     *
      * @param p mime object
      * @return Hashmap&lt;Content-Id, &lt;Base64Image, ContentType&gt;&gt;
      * @throws Exception

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,10 +16,12 @@
 
 package cli;
 
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.base.Throwables;
+import com.google.common.io.Files;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -29,19 +31,13 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-
-import javax.mail.MessagingException;
-
 import org.junit.Test;
-
 import util.LogLevel;
 import util.Logger;
 
-import com.google.common.base.Throwables;
-import com.google.common.io.Files;
-
 /**
  * TestClass.
+ *
  * @author Nick Russler
  */
 public class MainTest {
@@ -66,12 +62,7 @@ public class MainTest {
                 System.out.println(f.getAbsolutePath());
                 writer.println("Process file: " + f.getAbsolutePath());
 
-                Main.main(new String[] {
-                        "-d",
-                        "-o", outPath,
-                        f.getAbsolutePath()
-                });
-
+                Main.main(new String[]{"-d", "-o", outPath, f.getAbsolutePath()});
 
                 // Desktop.getDesktop().open(new File(outPath));
             } catch (Exception e) {
@@ -96,11 +87,7 @@ public class MainTest {
         File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testPlain.eml").toURI()).getAbsolutePath();
 
-        String[] args = new String[]{
-                "-o", tmpPdf.getAbsolutePath(),
-                "-s", "Letter",
-                eml
-        };
+        String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-s", "Letter", eml};
 
         LogLevel old = Logger.level;
         Logger.level = LogLevel.Error;
@@ -122,10 +109,7 @@ public class MainTest {
         File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testHtml.eml").toURI()).getAbsolutePath();
 
-        String[] args = new String[]{
-                "-o", tmpPdf.getAbsolutePath(),
-                eml
-        };
+        String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), eml};
 
         LogLevel old = Logger.level;
         Logger.level = LogLevel.Error;
@@ -147,10 +131,7 @@ public class MainTest {
         File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
         String msgFilePath = new File(MainTest.class.getClassLoader().getResource("msg/testHtml.msg").toURI()).getAbsolutePath();
 
-        String[] args = new String[] {
-                "-o", tmpPdf.getAbsolutePath(),
-                msgFilePath
-        };
+        String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), msgFilePath};
 
         LogLevel old = Logger.level;
         Logger.level = LogLevel.Error;
@@ -172,11 +153,7 @@ public class MainTest {
         File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachments.eml").toURI()).getAbsolutePath();
 
-        String[] args = new String[]{
-                "-o", tmpPdf.getAbsolutePath(),
-                "-a",
-                eml
-        };
+        String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-a", eml};
 
         LogLevel old = Logger.level;
         Logger.level = LogLevel.Error;
@@ -185,7 +162,7 @@ public class MainTest {
 
         Logger.level = old;
 
-        File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) +  "-attachments");
+        File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) + "-attachments");
 
         List<String> attachments = Arrays.asList(attachmentDir.list());
         assertThat(attachments, hasItems("IMAG0144.jpg", "IMAG0144.jpg"));
@@ -211,11 +188,7 @@ public class MainTest {
         File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachmentsNoName.eml").toURI()).getAbsolutePath();
 
-        String[] args = new String[]{
-                "-o", tmpPdf.getAbsolutePath(),
-                "-a",
-                eml
-        };
+        String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-a", eml};
 
         LogLevel old = Logger.level;
         Logger.level = LogLevel.Error;
@@ -224,7 +197,7 @@ public class MainTest {
 
         Logger.level = old;
 
-        File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) +  "-attachments");
+        File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) + "-attachments");
 
         List<String> attachments = Arrays.asList(attachmentDir.list());
         assertTrue(attachments.get(0).endsWith(".jpg"));

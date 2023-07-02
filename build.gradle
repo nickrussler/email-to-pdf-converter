@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'eclipse'
 
-    id 'checkstyle'
+    id 'com.diffplug.spotless' version '6.13.0'
     id 'com.github.spotbugs' version '4.5.1'
 
     id 'jacoco'
@@ -90,10 +90,27 @@ check.dependsOn jacocoTestReport, dependencyUpdates
 jacocoTestReport.mustRunAfter test
 dependencyUpdates.mustRunAfter jacocoTestReport
 
-/* checkstyle configuration */
-checkstyle {
-    configFile = file("src/test/resources/checkstyle.xml")
+/* spotless configuration */
+spotless {
+    format 'misc', {
+        // define the files to apply `misc` to
+        target '*.gradle', '*.md', '.gitignore'
+
+        // define the steps to apply to those files
+        trimTrailingWhitespace()
+        indentWithSpaces() // or spaces. Takes an integer argument if you don't like 4
+        endWithNewline()
+    }
+
+    java {
+        target 'src/*/java/**/*.java'
+
+        eclipse().configFile(rootProject.layout.projectDirectory.dir("gradle/config/eclipse").file("eclipse-formatter-settings.xml"))
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
+compileJava.dependsOn spotlessApply
 
 /* spotbugs configuration */
 spotbugs {
