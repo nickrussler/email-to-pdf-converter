@@ -23,10 +23,8 @@ import com.google.common.html.HtmlEscapers;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -111,6 +109,26 @@ public class MimeMessageConverter {
     }
 
     /**
+     * Heuristic for compensating overly strict decoding in MimeUtility.decodeText, which fails if spaces are present in
+     * a header
+     * see <a href="https://stackoverflow.com/a/4725175">Stackoverflow</a>
+     *
+     * @param potentiallyInvalidlyEncodedHeader a header value which could contain invalid encoding according to RFC 822
+     * @return a header value which might be decoded correctly
+     */
+    public static String heuristicallyDecodeInvalidHeaderEncoding(String potentiallyInvalidlyEncodedHeader) throws UnsupportedEncodingException {
+        if (!potentiallyInvalidlyEncodedHeader.startsWith("=?")) {
+            return potentiallyInvalidlyEncodedHeader;
+        }
+
+        // this is a randomly generated alphanumeric string which will be used as a placeholder
+        final String spaceReplacement = "4oOyeQ2IXqdB";
+        final String spaceReplacedHeader = potentiallyInvalidlyEncodedHeader.replace(" ", spaceReplacement);
+        final String decodedSpacedReplacedHeader = MimeUtility.decodeText(spaceReplacedHeader);
+        return decodedSpacedReplacedHeader.replace(spaceReplacement, " ");
+    }
+
+    /**
      * Convert an email (eml, msg) file to PDF.
      *
      * @throws Exception
@@ -132,6 +150,8 @@ public class MimeMessageConverter {
         /* ######### Parse Header Fields ######### */
         Logger.debug("Read and decode header fields");
         String subject = message.getSubject();
+
+        subject = heuristicallyDecodeInvalidHeaderEncoding(subject);
 
         String from = message.getHeader("From", null);
         if (from == null) {
