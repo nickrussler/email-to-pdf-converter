@@ -139,7 +139,7 @@ public class MimeMessageParser {
                 }
 
                 // use text/plain entries only when we found nothing before
-                if (result.getEntry().isEmpty() || p.isMimeType("text/html")) {
+                if (result.getEntry().isEmpty()) {
                     result.setEntry(stringContent);
                     result.setContentType(new ContentType(p.getContentType()));
                 }
