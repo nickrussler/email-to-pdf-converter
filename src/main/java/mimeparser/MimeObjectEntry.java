@@ -26,6 +26,7 @@ import javax.mail.internet.ContentType;
 public class MimeObjectEntry<T> {
     private T entry;
     private ContentType contentType;
+    private int level = 2147483647;
 
     public MimeObjectEntry(T entry, ContentType contentType) {
         this.entry = entry;
@@ -46,5 +47,11 @@ public class MimeObjectEntry<T> {
 
     public void setContentType(ContentType contentType) {
         this.contentType = contentType;
+    }
+    public int getlevel() {
+        return this.level;
+    }
+    public void setlevel(int level) {
+        this.level = level;
     }
 }

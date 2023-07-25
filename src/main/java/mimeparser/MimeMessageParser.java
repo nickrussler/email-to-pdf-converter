@@ -127,21 +127,16 @@ public class MimeMessageParser {
             @Override
             public void walkMimeCallback(Part p, int level) throws Exception {
                 // only process text/plain and text/html
-                if (!p.isMimeType("text/plain") && !p.isMimeType("text/html")) {
-                    return;
-                }
-
-                String stringContent = getStringContent(p);
-                boolean isAttachment = Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition());
-
-                if (Strings.isNullOrEmpty(stringContent) || isAttachment) {
-                    return;
-                }
-
-                // use text/plain entries only when we found nothing before
-                if (result.getEntry().isEmpty()) {
-                    result.setEntry(stringContent);
-                    result.setContentType(new ContentType(p.getContentType()));
+                if (p.isMimeType("text/plain") || p.isMimeType("text/html")) {
+                    String stringContent = getStringContent(p);
+                    boolean isAttachment = Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition());
+                    if (!Strings.isNullOrEmpty(stringContent) && !isAttachment) {
+                        if ((result.getEntry()).isEmpty() || result.getlevel() >= level && p.isMimeType("text/html")) {
+                            result.setEntry(stringContent);
+                            result.setContentType(new ContentType(p.getContentType()));
+                            result.setlevel(level);
+                        }
+                    }
                 }
             }
         });
