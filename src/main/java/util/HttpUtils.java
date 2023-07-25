@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,6 @@ import com.github.markusbernhardt.proxy.ProxySearch;
 import com.github.markusbernhardt.proxy.ProxySearch.Strategy;
 import com.google.common.base.Throwables;
 import com.google.common.io.CharStreams;
-
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.*;
@@ -29,11 +28,13 @@ import java.util.List;
 
 /**
  * Utility Class for HTTP Request.
+ *
  * @author Nick Russler
  */
 public class HttpUtils {
     /**
      * Find the default proxy.
+     *
      * @return default proxy
      */
     public static Proxy getDefaultProxy() {
@@ -57,6 +58,7 @@ public class HttpUtils {
 
     /**
      * Makes a HTTP Post.
+     *
      * @param params
      * @return Response string
      */
@@ -78,6 +80,7 @@ public class HttpUtils {
 
     /**
      * Makes a HTTP Get.
+     *
      * @return Response string
      */
     public static String getRequest(String url) {

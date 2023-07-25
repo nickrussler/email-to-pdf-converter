@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,19 +21,19 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import gui.MainWindow;
-import mimeparser.MimeMessageConverter;
-import util.HttpUtils;
-import util.LogLevel;
-import util.Logger;
-
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.List;
+import mimeparser.MimeMessageConverter;
+import util.HttpUtils;
+import util.LogLevel;
+import util.Logger;
 
 /**
  * Commandline tool to convert an email (eml, msg) to html and pdf.
+ *
  * @author Nick Russler
  */
 public class Main {
@@ -110,7 +110,7 @@ public class Main {
             extParams.add("--proxy");
             extParams.add(proxy.toLowerCase());
             Logger.debug("Use default proxy %s", proxy);
-        } else if (!Strings.isNullOrEmpty(cli.getProxy())){
+        } else if (!Strings.isNullOrEmpty(cli.getProxy())) {
             extParams.add("--proxy");
             extParams.add(cli.getProxy());
             Logger.debug("Use proxy from parameters %s", cli.getProxy());
@@ -119,8 +119,12 @@ public class Main {
         extParams.add("--page-size");
         extParams.add(cli.getPageSize());
 
+        extParams.add("--dpi");
+        extParams.add(cli.getDPI());
+
         try {
-            MimeMessageConverter.convertToPdf(in, out, cli.isHideHeaders(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);
+            MimeMessageConverter.convertToPdf(
+                    in, out, cli.isHideHeaders(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);
         } catch (Exception e) {
             Logger.error("The email could not be converted. Error: %s", Throwables.getStackTraceAsString(e));
         }

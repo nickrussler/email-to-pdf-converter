@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,16 +16,16 @@
 
 package mimeparser;
 
-import static org.hamcrest.Matchers.equalToIgnoringCase;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalToIgnoringCase;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.ContentType;
-
 import org.junit.Test;
 
 /**
  * TestClass.
+ *
  * @author Nick Russler
  */
 public class ContentTypeCleanerTest {
@@ -39,7 +39,8 @@ public class ContentTypeCleanerTest {
 
     @Test
     public void cleanContentType_semicolonSequenceInParameterList() throws MessagingException {
-        ContentType contentType = new ContentType(ContentTypeCleaner.cleanContentType(null, "text/html; ;;;; ;;;   charset=\"utf-16\"  ;;;;"));
+        ContentType contentType = new ContentType(
+                ContentTypeCleaner.cleanContentType(null, "text/html; ;;;; ;;;   charset=\"utf-16\"  ;;;;"));
 
         assertThat("text/html", equalToIgnoringCase(contentType.getBaseType()));
         assertThat("utf-16", equalToIgnoringCase(contentType.getParameter("charset")));

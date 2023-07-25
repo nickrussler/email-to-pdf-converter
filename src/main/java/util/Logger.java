@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,6 +21,7 @@ import java.util.Date;
 
 /**
  * Simple logging class.
+ *
  * @author Nick Russler
  * @see <a href="http://stackoverflow.com/a/4332163/441907">http://stackoverflow.com/a/4332163/441907</a>
  */
@@ -29,14 +30,14 @@ public class Logger {
 
     /**
      * Log a string. Message is formatted with the supplied params using the String.format function.
+     *
      * @param message string message
-     * @param params params to insert into the message
+     * @param params  params to insert into the message
      */
     public static void debug(String message, Object... params) {
         if (level.compareTo(LogLevel.Debug) < 0) {
             return;
         }
-
 
         String fullClassName = Thread.currentThread().getStackTrace()[2].getClassName();
         String className = fullClassName.substring(fullClassName.lastIndexOf(".") + 1);
@@ -49,8 +50,9 @@ public class Logger {
 
     /**
      * Log a string. Message is formatted with the supplied params using the String.format function.
+     *
      * @param message string message
-     * @param params params to insert into the message
+     * @param params  params to insert into the message
      */
     public static void info(String message, Object... params) {
         if (level.compareTo(LogLevel.Info) < 0) {
@@ -61,9 +63,11 @@ public class Logger {
     }
 
     /**
-     * Log a string to the default error. Message is formatted with the supplied params using the String.format function.
+     * Log a string to the default error. Message is formatted with the supplied params using the String.format
+     * function.
+     *
      * @param message string message
-     * @param params params to insert into the message
+     * @param params  params to insert into the message
      */
     public static void error(String message, Object... params) {
         if (level.compareTo(LogLevel.Error) < 0) {

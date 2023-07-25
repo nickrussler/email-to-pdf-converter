@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,13 +21,15 @@ import java.util.regex.Pattern;
 
 /**
  * Simple class to replace substrings with a callback function.
+ *
  * @author Nick Russler
  */
 public class StringReplacer {
     /**
      * Replaces occurences of the regex using a callback function.
-     * @param input String to modify
-     * @param regex regex
+     *
+     * @param input    String to modify
+     * @param regex    regex
      * @param callback the occurences of the regex are replaced with the result of the callback function
      * @return modified string
      * @throws Exception

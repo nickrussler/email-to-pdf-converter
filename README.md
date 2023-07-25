@@ -1,12 +1,23 @@
 ## Email to PDF Converter (formely EML to PDF Converter) [![Actions Status](https://github.com/nickrussler/email-to-pdf-converter/workflows/Check,%20Build/badge.svg)](https://github.com/nickrussler/email-to-pdf-converter/actions)
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/email-to-pdf-converter.svg)](https://repology.org/project/email-to-pdf-converter/versions)
+
 This software can be used to convert email files (eml or msg) to pdf files. It can be used as a library, command line tool or desktop application with its GUI.
 
 The conversion is done by parsing (and cleaning) the mime/structure, converting it to html and then using [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) to convert the generated html to a pdf file.
 
 It also handles inline images, corrupt mime headers and can use a proxy.
 
+
+### Prerequisistes
+
+You need :
+
+* a complete jre, not a headless one (on Debian, for example, you need to have `openjdk-11-jre` installed);
+* [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf)needs to be in your $PATH
+
 ### Download
+
 You can download the lates binaries [**here**](//github.com/nickrussler/email-to-pdf-converter/releases/latest).
 
 There you can find a Windows setup.exe and a jar.<br>
@@ -44,6 +55,9 @@ Usage: EmailToPDFConverter [options] <email-file>
     -s, --page-size
       Set wkhtmltopdf paper size to: A4, Letter, etc. (default A4)
       Default: A4
+    -r, --dpi
+      Set wkhtmltopdf DPI. (default 300)
+      Default: 300
     -p, --proxy
       Proxy (e.g. "http://10.64.1.74:81"). If "auto" is supplied the default
       system proxy will be used.
