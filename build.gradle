@@ -18,6 +18,9 @@ sourceCompatibility = 1.7
 def gitVersionDetails = versionDetails()
 version = gitVersionDetails.lastTag
 
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
 jar {
     manifest {
         attributes 'Main-Class': 'cli.Main',

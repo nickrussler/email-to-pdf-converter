@@ -23,10 +23,8 @@ import com.google.common.html.HtmlEscapers;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -34,6 +32,7 @@ import java.text.DateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
 import org.apache.tika.mime.MimeTypes;
@@ -131,7 +130,8 @@ public class MimeMessageConverter {
 
         /* ######### Parse Header Fields ######### */
         Logger.debug("Read and decode header fields");
-        String subject = message.getSubject();
+
+        String subject = parseSubject(message);
 
         String from = message.getHeader("From", null);
         if (from == null) {
@@ -389,5 +389,25 @@ public class MimeMessageConverter {
         }
 
         Logger.info("Conversion finished");
+    }
+
+    public static String parseSubject(MimeMessage message) {
+        String subject;
+        try {
+            subject = message.getSubject();
+        } catch (MessagingException e) {
+            return ""; // fallback to empty subject
+        }
+
+        // heuristically decoding of malformed encoded subjects (see https://stackoverflow.com/a/4725175)
+        if (subject.startsWith("=?") && subject.endsWith("?=") && subject.contains(" ")) {
+            try {
+                subject = MimeUtility.decodeText(MimeUtility.unfold(subject.replaceAll(" ", "=20")));
+            } catch (UnsupportedEncodingException ex) {
+                // ignore this error
+            }
+        }
+
+        return subject;
     }
 }
