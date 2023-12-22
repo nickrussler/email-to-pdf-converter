@@ -124,7 +124,7 @@ public class Main {
 
         try {
             MimeMessageConverter.convertToPdf(
-                    in, out, cli.isHideHeaders(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);
+                    in, out, cli.isHideHeaders(), cli.isAddAttachmentNames(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);
         } catch (Exception e) {
             Logger.error("The email could not be converted. Error: %s", Throwables.getStackTraceAsString(e));
         }

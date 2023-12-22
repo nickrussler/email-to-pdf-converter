@@ -62,6 +62,10 @@ public class CommandLineParameters {
     private boolean hideHeaders = false;
 
     @Parameter(
+            names = {"-aa", "--add-attachment-names"}, description = "Add the list of attachment names under the body text")
+    private boolean addAttachmentNames = false;
+
+    @Parameter(
             names = {"-a", "--extract-attachments"}, description = "Extract Attachments.")
     private boolean extractAttachments = false;
 
@@ -143,6 +147,14 @@ public class CommandLineParameters {
 
     public void setHideHeaders(boolean hideHeaders) {
         this.hideHeaders = hideHeaders;
+    }
+
+    protected boolean isAddAttachmentNames() {
+        return addAttachmentNames;
+    }
+
+    protected void setAddAttachmentNames(boolean addAttachmentNames) {
+        this.addAttachmentNames = addAttachmentNames;
     }
 
     public boolean isVersion() {
