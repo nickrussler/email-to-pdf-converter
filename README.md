@@ -9,7 +9,7 @@ The conversion is done by parsing (and cleaning) the mime/structure, converting 
 It also handles inline images, corrupt mime headers and can use a proxy.
 
 
-### Prerequisistes
+### Prerequisites
 
 You need :
 
