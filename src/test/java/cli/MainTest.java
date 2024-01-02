@@ -105,6 +105,48 @@ public class MainTest {
     }
 
     @Test
+    public void main_simplePlainMessageWithCC() throws IOException, URISyntaxException {
+        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        String eml = new File(MainTest.class.getClassLoader().getResource("eml/testPlainWithCC.eml").toURI()).getAbsolutePath();
+
+        String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-s", "Letter", eml};
+
+        LogLevel old = Logger.level;
+        Logger.level = LogLevel.Error;
+
+        Main.main(args);
+
+        Logger.level = old;
+
+        assertTrue(tmpPdf.exists());
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
+    public void main_messageWithAttachmentList() throws IOException, URISyntaxException {
+        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachments.eml").toURI()).getAbsolutePath();
+
+        String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-aa", "-s", "Letter", eml};
+
+        LogLevel old = Logger.level;
+        Logger.level = LogLevel.Error;
+
+        Main.main(args);
+
+        Logger.level = old;
+
+        assertTrue(tmpPdf.exists());
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
     public void main_htmlMessage() throws IOException, URISyntaxException {
         File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testHtml.eml").toURI()).getAbsolutePath();

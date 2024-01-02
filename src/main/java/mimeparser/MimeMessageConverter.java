@@ -77,6 +77,8 @@ public class MimeMessageConverter {
     private static final String HTML_WRAPPER_TEMPLATE = "<!DOCTYPE html><html><head><style>body{font-size: 0.5cm;}</style><meta charset=\"%s\"><title>title</title></head><body>%s</body></html>";
     private static final String ADD_HEADER_IFRAME_JS_TAG_TEMPLATE = "<script id=\"header-v6a8oxpf48xfzy0rhjra\" data-file=\"%s\" type=\"text/javascript\">%s</script>";
     private static final String HEADER_FIELD_TEMPLATE = "<tr><td class=\"header-name\">%s</td><td class=\"header-value\">%s</td></tr>";
+    private static final String ATTACHMENT_LIST_TEMPLATE = "<hr>%s<ul>%s</ul>";
+    private static final String ATTACHMENT_ITEM_TEMPLATE = "<li>%s</li>";
 
     private static final Pattern HTML_META_CHARSET_REGEX = Pattern.compile(
             "(<meta(?!\\s*(?:name|value)\\s*=)[^>]*?charset\\s*=[\\s\"']*)([^\\s\"'/>]*)", Pattern.DOTALL);
@@ -115,7 +117,7 @@ public class MimeMessageConverter {
      * @throws Exception
      */
     public static void convertToPdf(
-                                    String emailFilePath, String pdfOutputPath, boolean hideHeaders, boolean extractAttachments, String attachmentsdir, List<String> extParams) throws Exception {
+                                    String emailFilePath, String pdfOutputPath, boolean hideHeaders, boolean addAttachmentNames, boolean extractAttachments, String attachmentsdir, List<String> extParams) throws Exception {
         Logger.info("Start converting %s to %s", emailFilePath, pdfOutputPath);
 
         final MimeMessage message;
@@ -144,19 +146,8 @@ public class MimeMessageConverter {
             // ignore this error
         }
 
-        String[] recipients = new String[0];
-        String recipientsRaw = message.getHeader("To", null);
-        if (!Strings.isNullOrEmpty(recipientsRaw)) {
-            try {
-                recipientsRaw = MimeUtility.unfold(recipientsRaw);
-                recipients = recipientsRaw.split(",");
-                for (int i = 0; i < recipients.length; i++) {
-                    recipients[i] = MimeUtility.decodeText(recipients[i]);
-                }
-            } catch (Exception e) {
-                // ignore this error
-            }
-        }
+        String[] recipientsTo = getRecipients(message, "To");
+        String[] recipientsCc = getRecipients(message, "Cc");
 
         String sentDateStr = null;
         try {
@@ -249,8 +240,11 @@ public class MimeMessageConverter {
         Logger.debug("---------------Result-------------");
         Logger.debug("Subject: %s", subject);
         Logger.debug("From: %s", from);
-        if (recipients.length > 0) {
-            Logger.debug("To: %s", Joiner.on(", ").join(recipients));
+        if (recipientsTo.length > 0) {
+            Logger.debug("To: %s", Joiner.on(", ").join(recipientsTo));
+        }
+        if (recipientsCc.length > 0) {
+            Logger.debug("CC: %s", Joiner.on(", ").join(recipientsCc));
         }
         Logger.debug("Date: %s", sentDateStr);
         String bodyExcerpt = htmlBody.replace("\n", "").replace("\r", "");
@@ -280,9 +274,14 @@ public class MimeMessageConverter {
                         HEADER_FIELD_TEMPLATE, "Subject", "<b>" + HtmlEscapers.htmlEscaper().escape(subject) + "<b>");
             }
 
-            if (recipients.length > 0) {
+            if (recipientsTo.length > 0) {
                 headers += String.format(
-                        HEADER_FIELD_TEMPLATE, "To", HtmlEscapers.htmlEscaper().escape(Joiner.on(", ").join(recipients)));
+                        HEADER_FIELD_TEMPLATE, "To", HtmlEscapers.htmlEscaper().escape(Joiner.on(", ").join(recipientsTo)));
+            }
+
+            if (recipientsCc.length > 0) {
+                headers += String.format(
+                        HEADER_FIELD_TEMPLATE, "Cc", HtmlEscapers.htmlEscaper().escape(Joiner.on(", ").join(recipientsCc)));
             }
 
             if (!Strings.isNullOrEmpty(sentDateStr)) {
@@ -296,6 +295,18 @@ public class MimeMessageConverter {
             URL contentScriptResource = MimeMessageConverter.class.getClassLoader().getResource("contentScript.js");
             htmlBody += String.format(
                     ADD_HEADER_IFRAME_JS_TAG_TEMPLATE, tmpHtmlHeader.toURI(), Resources.toString(contentScriptResource, StandardCharsets.UTF_8));
+        }
+
+        // Append attachment filename list to body
+        if (addAttachmentNames) {
+            String attachmentsHtml = "";
+            List<AttachmentResource> attachments = EmailConverter.mimeMessageToEmail(message).getAttachments();
+            if (attachments.size() > 0) {
+                for (AttachmentResource attach : attachments) {
+                    attachmentsHtml += String.format(ATTACHMENT_ITEM_TEMPLATE, attach.getName());
+                }
+                htmlBody += String.format(ATTACHMENT_LIST_TEMPLATE, "Attachments:", attachmentsHtml);
+            }
         }
 
         File tmpHtml = File.createTempFile("emailtopdf", ".html");
@@ -389,6 +400,23 @@ public class MimeMessageConverter {
         }
 
         Logger.info("Conversion finished");
+    }
+
+    private static String[] getRecipients(final MimeMessage message, String header) throws MessagingException {
+        String[] recipients = new String[0];
+        String recipientsRaw = message.getHeader(header, null);
+        if (!Strings.isNullOrEmpty(recipientsRaw)) {
+            try {
+                recipientsRaw = MimeUtility.unfold(recipientsRaw);
+                recipients = recipientsRaw.split(",");
+                for (int i = 0; i < recipients.length; i++) {
+                    recipients[i] = MimeUtility.decodeText(recipients[i]);
+                }
+            } catch (Exception e) {
+                // ignore this error
+            }
+        }
+        return recipients;
     }
 
     public static String parseSubject(MimeMessage message) {
