@@ -348,14 +348,13 @@ public class MimeMessageConverter {
                 attachmentDir = new File(pdf.getParentFile(), Files.getNameWithoutExtension(pdfOutputPath) + "-attachments");
             }
 
-            Logger.info("Extract attachments to %s", attachmentDir.getAbsolutePath());
-
             List<AttachmentResource> attachments = EmailConverter.mimeMessageToEmail(message).getAttachments();
 
             Logger.debug("Found %s attachments", attachments.size());
 
             if (attachments.size() > 0) {
                 attachmentDir.mkdirs();
+                Logger.info("Extract attachments to %s", attachmentDir.getAbsolutePath());
             }
 
             for (int i = 0; i < attachments.size(); i++) {
