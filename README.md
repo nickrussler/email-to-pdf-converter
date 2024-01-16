@@ -33,11 +33,11 @@ Usage: EmailToPDFConverter [options] <email-file>
   Options:
     -d, --debug
       Debug mode
-      Default: false
-    -e, --error
       Display only Error messages.
       Default: false
-	-aa, --add-attachment-names
+    -e, --error
+      Default: false
+    -aa, --add-attachment-names
       Add the list of attachment names under the body text
       Default: false	  
     -a, --extract-attachments
