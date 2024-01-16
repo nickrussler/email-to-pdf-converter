@@ -39,7 +39,7 @@ Usage: EmailToPDFConverter [options] <email-file>
       Default: false
     -aa, --add-attachment-names
       Add the list of attachment names under the body text
-      Default: false	  
+      Default: false
     -a, --extract-attachments
       Extract Attachments.
       Default: false
