@@ -33,9 +33,9 @@ Usage: EmailToPDFConverter [options] <email-file>
   Options:
     -d, --debug
       Debug mode
-      Display only Error messages.
       Default: false
     -e, --error
+      Display only Error messages.
       Default: false
     -aa, --add-attachment-names
       Add the list of attachment names under the body text
