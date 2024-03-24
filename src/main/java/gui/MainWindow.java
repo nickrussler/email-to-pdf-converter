@@ -245,15 +245,15 @@ public class MainWindow {
         chckbxUseProxy.setBounds(10, 43, 86, 23);
         panel.add(chckbxUseProxy);
 
-        final JCheckBox chckbxAddAttachmentNames = new JCheckBox("Add Attachment Names");
-        chckbxAddAttachmentNames.setBackground(Color.WHITE);
-        chckbxAddAttachmentNames.setBounds(10, 69, 180, 23);
-        panel.add(chckbxAddAttachmentNames);
-
         final JCheckBox chckbxExtractAttachments = new JCheckBox("Extract Attachments");
         chckbxExtractAttachments.setBackground(Color.WHITE);
-        chckbxExtractAttachments.setBounds(10, 69, 180, 23);
+        chckbxExtractAttachments.setBounds(10, 69, 150, 23);
         panel.add(chckbxExtractAttachments);
+
+        final JCheckBox chckbxAddAttachmentNames = new JCheckBox("Add Attachment Names");
+        chckbxAddAttachmentNames.setBackground(Color.WHITE);
+        chckbxAddAttachmentNames.setBounds(160, 69, 180, 23);
+        panel.add(chckbxAddAttachmentNames);
 
         JPanel panelProgress = new JPanel();
         panelProgress.setBorder(new TitledBorder(null, "", TitledBorder.LEADING, TitledBorder.TOP, null, null));

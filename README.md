@@ -37,6 +37,9 @@ Usage: EmailToPDFConverter [options] <email-file>
     -e, --error
       Display only Error messages.
       Default: false
+    -aa, --add-attachment-names
+      Add the list of attachment names under the body text
+      Default: false
     -a, --extract-attachments
       Extract Attachments.
       Default: false
