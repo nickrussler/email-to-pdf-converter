@@ -39,12 +39,12 @@ repositories {
 
 dependencies {
     implementation 'com.google.guava:guava:29.0-jre'
-    implementation 'com.sun.mail:javax.mail:1.6.2'
+    implementation 'com.sun.mail:jakarta.mail:2.0.1'
     implementation 'com.beust:jcommander:1.78'
     implementation 'org.apache.tika:tika-core:1.24.1'
     implementation 'com.github.markusbernhardt:proxy-vole:1.0.5'
-    implementation 'org.simplejavamail:simple-java-mail:6.5.2'
-    implementation 'org.simplejavamail:outlook-module:6.5.2'
+    implementation 'org.simplejavamail:simple-java-mail:8.10.1'
+    implementation 'org.simplejavamail:outlook-module:8.10.1'
     implementation 'org.slf4j:slf4j-simple:1.7.30'
 
     testImplementation 'junit:junit:4.+'

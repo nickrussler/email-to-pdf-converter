@@ -16,7 +16,7 @@
 
 package mimeparser;
 
-import javax.mail.internet.ContentType;
+import jakarta.mail.internet.ContentType;
 
 /**
  * Wrapper class that is used to bundle an object with it's contentType.

@@ -16,7 +16,7 @@
 
 package mimeparser;
 
-import javax.mail.Part;
+import jakarta.mail.Part;
 
 /**
  * Interface for the Recursive Callback.

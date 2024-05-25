@@ -19,8 +19,8 @@ package mimeparser;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
