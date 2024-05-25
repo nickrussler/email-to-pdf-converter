@@ -226,6 +226,41 @@ public class MainTest {
     }
 
     @Test
+    public void main_attachmentsWithSlashInAttachmentName() throws IOException, URISyntaxException {
+        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachmentsWithSlashInName.eml").toURI()).getAbsolutePath();
+
+        String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-a", eml};
+
+        LogLevel old = Logger.level;
+        Logger.level = LogLevel.Error;
+
+        Main.main(args);
+
+        Logger.level = old;
+
+        File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) + "-attachments");
+
+        List<String> attachments = Arrays.asList(attachmentDir.list());
+        assertThat(attachments, hasItems("test_IMAG0144.jpg")); // '/' is replace with '_'
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+
+        for (String fileName : attachments) {
+            File f = new File(attachmentDir, fileName);
+            if (!f.delete()) {
+                f.deleteOnExit();
+            }
+        }
+
+        if (!attachmentDir.delete()) {
+            attachmentDir.deleteOnExit();
+        }
+    }
+
+    @Test
     public void main_attachmentsSniffFileExtension() throws IOException, URISyntaxException {
         File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachmentsNoName.eml").toURI()).getAbsolutePath();

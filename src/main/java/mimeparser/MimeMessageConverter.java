@@ -32,16 +32,14 @@ import java.text.DateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeUtility;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeUtility;
+import org.apache.tika.io.FilenameUtils;
 import org.apache.tika.mime.MimeTypes;
 import org.simplejavamail.api.email.AttachmentResource;
 import org.simplejavamail.converter.EmailConverter;
-import util.LogLevel;
-import util.Logger;
-import util.StringReplacer;
-import util.StringReplacerCallback;
+import util.*;
 
 /**
  * Converts email (eml, msg) files into pdf files.
@@ -154,12 +152,17 @@ public class MimeMessageConverter {
             Date sentDate = message.getSentDate();
             sentDateStr = DATE_FORMATTER.format(sentDate);
         } catch (Exception e) {
+            Logger.error("Could not parse the date");
             e.printStackTrace();
         }
 
         if (sentDateStr == null) {
-            Logger.error("Could not parse the date, fallback to raw value");
+            Logger.error("Attempt to fallback to raw date value");
             sentDateStr = message.getHeader("date", null);
+
+            if (sentDateStr == null) {
+                Logger.error("No Date value found, proceeding without date value");
+            }
         }
 
         /* ######### Parse the mime structure ######### */
@@ -367,11 +370,19 @@ public class MimeMessageConverter {
                     String attachmentFilename = null;
                     try {
                         attachmentFilename = attachmentResource.getDataSource().getName();
+
+                        // see simple-java-mail MimeMessageParser.java (https://tinyurl.com/45f98j3x)
+                        if (attachmentFilename.equals("UnknownAttachment")) {
+                            attachmentFilename = null;
+                        }
                     } catch (Exception e) {
                         // ignore this error
                     }
 
                     if (!Strings.isNullOrEmpty(attachmentFilename)) {
+                        // sanitize filename
+                        attachmentFilename = FileNameSanitizer.sanitizeFileName(attachmentFilename, '_');
+
                         attachFile = new File(attachmentDir, attachmentFilename);
                     } else {
                         String extension = "";
