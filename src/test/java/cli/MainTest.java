@@ -207,7 +207,7 @@ public class MainTest {
         File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) + "-attachments");
 
         List<String> attachments = Arrays.asList(attachmentDir.list());
-        assertThat(attachments, hasItems("IMAG0144.jpg", "IMAG0144.jpg"));
+        assertThat(attachments, hasItems("IMAG0144.jpg", "IMAG0145.jpg"));
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
@@ -242,7 +242,7 @@ public class MainTest {
         File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) + "-attachments");
 
         List<String> attachments = Arrays.asList(attachmentDir.list());
-        assertThat(attachments, hasItems("test_IMAG0144.jpg")); // '/' is replace with '_'
+        assertThat(attachments, hasItems("test_IMAG0144.jpg", "IMAG0145.jpg")); // '/' is replace with '_'
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
