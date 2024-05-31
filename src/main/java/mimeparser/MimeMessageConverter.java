@@ -179,7 +179,7 @@ public class MimeMessageConverter {
         /* ######### Embed images in the html ######### */
         String htmlBody = bodyEntry.getEntry();
         if (bodyEntry.getContentType().match("text/html")) {
-            if (inlineImageMap.size() > 0) {
+            if (!inlineImageMap.isEmpty()) {
                 Logger.debug("Embed the referenced images (cid) using <img src=\"data:image ...> syntax");
 
                 // find embedded images and embed them in html using <img src="data:image ...> syntax
@@ -201,6 +201,8 @@ public class MimeMessageConverter {
 
                         // found no image for this cid, just return the matches string as it is
                         if (base64Entry == null) {
+                            Logger.error("Found no inline image for cid: %s", cid);
+
                             return m.group();
                         }
 
