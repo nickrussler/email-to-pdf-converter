@@ -186,7 +186,18 @@ public class MimeMessageConverter {
                 htmlBody = StringReplacer.replace(htmlBody, IMG_CID_REGEX, new StringReplacerCallback() {
                     @Override
                     public String replace(Matcher m) throws Exception {
-                        MimeObjectEntry<String> base64Entry = inlineImageMap.get("<" + m.group(1) + ">");
+                        String cid = m.group(1);
+                        MimeObjectEntry<String> base64Entry = inlineImageMap.get("<" + cid + ">");
+
+                        // heuristic to find entry with in eml cid=X and Content-ID=<X@...>
+                        if (base64Entry == null) {
+                            for (String key : inlineImageMap.keySet()) {
+                                if (key.startsWith("<" + cid + "@") && key.endsWith(">")) {
+                                    base64Entry = inlineImageMap.get(key);
+                                    break;
+                                }
+                            }
+                        }
 
                         // found no image for this cid, just return the matches string as it is
                         if (base64Entry == null) {
