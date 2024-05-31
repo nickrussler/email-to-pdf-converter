@@ -23,6 +23,13 @@ import com.google.common.html.HtmlEscapers;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeUtility;
+import org.apache.tika.mime.MimeTypes;
+import org.simplejavamail.api.email.AttachmentResource;
+import org.simplejavamail.converter.EmailConverter;
+import util.*;
 
 import java.io.*;
 import java.net.URL;
@@ -32,14 +39,9 @@ import java.text.DateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import jakarta.mail.internet.MimeUtility;
-import org.apache.tika.io.FilenameUtils;
-import org.apache.tika.mime.MimeTypes;
-import org.simplejavamail.api.email.AttachmentResource;
-import org.simplejavamail.converter.EmailConverter;
-import util.*;
+
+import static com.google.common.io.Files.getFileExtension;
+import static com.google.common.io.Files.getNameWithoutExtension;
 
 /**
  * Converts email (eml, msg) files into pdf files.
@@ -114,15 +116,14 @@ public class MimeMessageConverter {
      *
      * @throws Exception
      */
-    public static void convertToPdf(
-                                    String emailFilePath, String pdfOutputPath, boolean hideHeaders, boolean addAttachmentNames, boolean extractAttachments, String attachmentsdir, List<String> extParams) throws Exception {
+    public static void convertToPdf(String emailFilePath, String pdfOutputPath, boolean hideHeaders, boolean addAttachmentNames, boolean extractAttachments, String attachmentsdir, List<String> extParams) throws Exception {
         Logger.info("Start converting %s to %s", emailFilePath, pdfOutputPath);
 
         final MimeMessage message;
         if (emailFilePath.toLowerCase().endsWith(".msg")) {
             Logger.debug("Read msg file from %s, convert it to eml", emailFilePath);
-            message = new MimeMessage(
-                    null, new ByteArrayInputStream(EmailConverter.outlookMsgToEML(new FileInputStream(emailFilePath)).getBytes(StandardCharsets.UTF_8)));
+            String emlString = EmailConverter.outlookMsgToEML(new FileInputStream(emailFilePath));
+            message = new MimeMessage(null, new ByteArrayInputStream(emlString.getBytes(StandardCharsets.UTF_8)));
         } else {
             Logger.debug("Read eml file from %s", emailFilePath);
             message = new MimeMessage(null, new FileInputStream(emailFilePath));
@@ -348,18 +349,24 @@ public class MimeMessageConverter {
             if (!Strings.isNullOrEmpty(attachmentsdir)) {
                 attachmentDir = new File(attachmentsdir);
             } else {
-                attachmentDir = new File(pdf.getParentFile(), Files.getNameWithoutExtension(pdfOutputPath) + "-attachments");
+                attachmentDir = new File(pdf.getParentFile(), getNameWithoutExtension(pdfOutputPath) + "-attachments");
             }
 
             List<AttachmentResource> attachments = EmailConverter.mimeMessageToEmail(message).getAttachments();
 
             Logger.debug("Found %s attachments", attachments.size());
 
-            if (attachments.size() > 0) {
-                attachmentDir.mkdirs();
+            if (!attachments.isEmpty()) {
+                boolean successfullyCreatedAttachmentDir = attachmentDir.mkdirs();
+
+                if (!successfullyCreatedAttachmentDir) {
+                    throw new IllegalStateException("Failed to create attachment directory");
+                }
+
                 Logger.info("Extract attachments to %s", attachmentDir.getAbsolutePath());
             }
 
+            Map<String, Integer> attachmentFileNameFrequency = new HashMap<>();
             for (int i = 0; i < attachments.size(); i++) {
                 File attachFile = null;
                 try {
@@ -367,22 +374,9 @@ public class MimeMessageConverter {
 
                     AttachmentResource attachmentResource = attachments.get(i);
 
-                    String attachmentFilename = null;
-                    try {
-                        attachmentFilename = attachmentResource.getDataSource().getName();
-
-                        // see simple-java-mail MimeMessageParser.java (https://tinyurl.com/45f98j3x)
-                        if (attachmentFilename.equals("UnknownAttachment")) {
-                            attachmentFilename = null;
-                        }
-                    } catch (Exception e) {
-                        // ignore this error
-                    }
+                    String attachmentFilename = getAttachmentFilename(attachmentResource, attachmentFileNameFrequency);
 
                     if (!Strings.isNullOrEmpty(attachmentFilename)) {
-                        // sanitize filename
-                        attachmentFilename = FileNameSanitizer.sanitizeFileName(attachmentFilename, '_');
-
                         attachFile = new File(attachmentDir, attachmentFilename);
                     } else {
                         String extension = "";
@@ -403,8 +397,6 @@ public class MimeMessageConverter {
                     }
 
                     Logger.debug("Saved Attachment %s to %s", i, attachFile.getAbsolutePath());
-
-                    attachFile = null;
                 } catch (Exception e) {
                     Logger.error(
                             "Could not save attachment to %s. Error: %s", attachFile, Throwables.getStackTraceAsString(e));
@@ -413,6 +405,44 @@ public class MimeMessageConverter {
         }
 
         Logger.info("Conversion finished");
+    }
+
+    private static String getAttachmentFilename(AttachmentResource attachmentResource, Map<String, Integer> attachmentFileNameFrequency) {
+        String attachmentFilename = null;
+        try {
+            attachmentFilename = attachmentResource.getDataSource().getName();
+        } catch (Exception e) {
+            // ignore this error
+        }
+
+        if (Strings.isNullOrEmpty(attachmentFilename)) {
+            return null;
+        }
+
+        // see simple-java-mail MimeMessageParser.java (https://tinyurl.com/45f98j3x)
+        if (attachmentFilename.equals("UnknownAttachment")) {
+            return null;
+        }
+
+        // sanitize filename
+        attachmentFilename = FileNameSanitizer.sanitizeFileName(attachmentFilename, '_');
+
+        Integer fileNamesCount = attachmentFileNameFrequency.get(attachmentFilename);
+        if (fileNamesCount != null) {
+            String extension = getFileExtension(attachmentFilename);
+
+            attachmentFilename = String.format("%s (%d)", getNameWithoutExtension(attachmentFilename), fileNamesCount);
+
+            if (!Strings.isNullOrEmpty(extension)) {
+                attachmentFilename += "." + extension;
+            }
+
+            attachmentFileNameFrequency.put(attachmentFilename, fileNamesCount + 1);
+        } else {
+            attachmentFileNameFrequency.put(attachmentFilename, 2);
+        }
+
+        return attachmentFilename;
     }
 
     private static String[] getRecipients(final MimeMessage message, String header) throws MessagingException {
