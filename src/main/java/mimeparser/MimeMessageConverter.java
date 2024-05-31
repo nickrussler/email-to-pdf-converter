@@ -83,7 +83,7 @@ public class MimeMessageConverter {
     private static final Pattern HTML_META_CHARSET_REGEX = Pattern.compile(
             "(<meta(?!\\s*(?:name|value)\\s*=)[^>]*?charset\\s*=[\\s\"']*)([^\\s\"'/>]*)", Pattern.DOTALL);
 
-    private static final Pattern IMG_CID_REGEX = Pattern.compile("cid:(.*?)\"", Pattern.DOTALL);
+    private static final Pattern IMG_CID_REGEX = Pattern.compile("cid:(.*?)[\"']", Pattern.DOTALL);
     private static final Pattern IMG_CID_PLAIN_REGEX = Pattern.compile("\\[cid:(.*?)\\]", Pattern.DOTALL);
 
     private static final String VIEWPORT_SIZE = "2480x3508";
