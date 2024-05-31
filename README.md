@@ -1,5 +1,4 @@
 ## Email to PDF Converter (formely EML to PDF Converter) [![Actions Status](https://github.com/nickrussler/email-to-pdf-converter/workflows/Check,%20Build/badge.svg)](https://github.com/nickrussler/email-to-pdf-converter/actions)
-
 [![Packaging status](https://repology.org/badge/vertical-allrepos/email-to-pdf-converter.svg)](https://repology.org/project/email-to-pdf-converter/versions)
 
 This software can be used to convert email files (eml or msg) to pdf files. It can be used as a library, command line tool or desktop application with its GUI.
@@ -10,19 +9,16 @@ It also handles inline images, corrupt mime headers and can use a proxy.
 
 
 ### Prerequisites
-
 You need :
 
 * a complete jre, not a headless one (on Debian, for example, you need to have `openjdk-11-jre` installed);
-* [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf)needs to be in your $PATH
+* [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) needs to be in your $PATH
 
 ### Download
-
 You can download the lates binaries [**here**](//github.com/nickrussler/email-to-pdf-converter/releases/latest).
 
 There you can find a Windows setup.exe and a jar.<br>
 If you want to use the jar (e.g. for a non Windows OS) you need the [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH.
-
 
 ### Screenshot
 <img src="https://www.whitebyte.info/wp-content/uploads/2015/02/scr1.png" />
