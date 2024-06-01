@@ -138,7 +138,7 @@ public class MimeMessageParser {
                 String stringContent = getStringContent(p);
                 boolean isAttachment = Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition());
 
-                if (Strings.isNullOrEmpty(stringContent) || isAttachment) {
+                if (Strings.nullToEmpty(stringContent).trim().isEmpty() || isAttachment) {
                     return;
                 }
 
