@@ -19,3 +19,8 @@ jobs:
       run: ./gradlew check
     - name: Build Jar
       run: ./gradlew shadowJar
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v4
+      with:
+          name: jar
+          path: build/libs/emailconverter-*-all.jar
