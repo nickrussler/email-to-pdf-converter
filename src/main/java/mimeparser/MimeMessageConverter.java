@@ -442,6 +442,8 @@ public class MimeMessageConverter {
 
         Integer fileNamesCount = attachmentFileNameFrequency.get(attachmentFilename);
         if (fileNamesCount != null) {
+            attachmentFileNameFrequency.put(attachmentFilename, fileNamesCount + 1);
+
             String extension = getFileExtension(attachmentFilename);
 
             attachmentFilename = String.format("%s (%d)", getNameWithoutExtension(attachmentFilename), fileNamesCount);
@@ -449,8 +451,6 @@ public class MimeMessageConverter {
             if (!Strings.isNullOrEmpty(extension)) {
                 attachmentFilename += "." + extension;
             }
-
-            attachmentFileNameFrequency.put(attachmentFilename, fileNamesCount + 1);
         } else {
             attachmentFileNameFrequency.put(attachmentFilename, 2);
         }
