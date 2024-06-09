@@ -43,8 +43,8 @@ dependencies {
     implementation 'com.beust:jcommander:1.78'
     implementation 'org.apache.tika:tika-core:2.9.2'
     implementation 'com.github.markusbernhardt:proxy-vole:1.0.5'
-    implementation 'org.simplejavamail:simple-java-mail:8.11.1'
-    implementation 'org.simplejavamail:outlook-module:8.11.1'
+    implementation 'org.simplejavamail:simple-java-mail:8.11.2'
+    implementation 'org.simplejavamail:outlook-module:8.11.2'
     implementation 'org.slf4j:slf4j-simple:1.7.30'
 
     testImplementation 'junit:junit:4.+'
