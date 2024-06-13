@@ -370,10 +370,12 @@ public class MimeMessageConverter {
             Logger.debug("Found %s attachments", attachments.size());
 
             if (!attachments.isEmpty()) {
-                boolean successfullyCreatedAttachmentDir = attachmentDir.mkdirs();
+                if (!attachmentDir.exists()) {
+                    boolean successfullyCreatedAttachmentDir = attachmentDir.mkdirs();
 
-                if (!successfullyCreatedAttachmentDir) {
-                    throw new IllegalStateException("Failed to create attachment directory");
+                    if (!successfullyCreatedAttachmentDir) {
+                        throw new IllegalStateException("Failed to create attachment directory");
+                    }
                 }
 
                 Logger.info("Extract attachments to %s", attachmentDir.getAbsolutePath());
