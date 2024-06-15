@@ -135,18 +135,31 @@ public class MimeMessageParser {
                     return;
                 }
 
-                String stringContent = getStringContent(p);
-                boolean isAttachment = Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition());
-
-                if (Strings.nullToEmpty(stringContent).trim().isEmpty() || isAttachment) {
+                // ignore attachments
+                if (Part.ATTACHMENT.equalsIgnoreCase(p.getDisposition())) {
                     return;
                 }
 
-                // use text/plain entries only when we found nothing before
-                if (result.getEntry().isEmpty() || p.isMimeType("text/html")) {
-                    result.setEntry(stringContent);
-                    result.setContentType(new ContentType(p.getContentType()));
+                // ignore text/plain part if we already found a text/html part
+                if (result.getContentType().match("text/html") && p.isMimeType("text/plain")) {
+                    return;
                 }
+
+                // ignore empty parts
+                String stringContent = getStringContent(p);
+                if (Strings.nullToEmpty(stringContent).trim().isEmpty()) {
+                    return;
+                }
+
+                // ignore parts of same type and smaller size
+                boolean partAndResultHaveSameContentType = result.getContentType().match(p.getContentType());
+                boolean partContentIsSmallerThanResultContent = stringContent.length() < result.getEntry().length();
+                if (partAndResultHaveSameContentType && partContentIsSmallerThanResultContent) {
+                    return;
+                }
+
+                result.setEntry(stringContent);
+                result.setContentType(new ContentType(p.getContentType()));
             }
         });
 
