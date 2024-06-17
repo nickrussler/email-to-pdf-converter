@@ -485,6 +485,10 @@ public class MimeMessageConverter {
             return ""; // fallback to empty subject
         }
 
+        if (subject == null) {
+            subject = "";
+        }
+
         // heuristically decoding of malformed encoded subjects (see https://stackoverflow.com/a/4725175)
         if (subject.startsWith("=?") && subject.endsWith("?=") && subject.contains(" ")) {
             try {
