@@ -31,9 +31,11 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import mimeparser.MimeMessageConverter;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -258,6 +260,83 @@ public class MainTest {
     }
 
     @Test
+    public void main_localFileReferenceBlockedByDefault() throws IOException {
+        File workDir = temporaryFolder.newFolder();
+        File marker = new File(workDir, "local-file-marker.html");
+        String markerText = "LOCAL_FILE_MARKER_7d2a";
+        Files.asCharSink(marker, StandardCharsets.UTF_8).write("<html><body><p>" + markerText + "</p></body></html>");
+
+        String bodyText = "BODY_MARKER_LOCAL_FILE_7d2a";
+        File eml = writeHtmlEml(
+                workDir, "local-file-reference.eml", "Local file reference", "sender@example.com", "<html><body><p>" + bodyText + "</p><iframe src=\"" + marker.toURI() + "\" style=\"width:600px;height:120px\"></iframe></body></html>");
+        File tmpPdf = new File(workDir, "output.pdf");
+
+        runMain("-o", tmpPdf.getAbsolutePath(), "-s", "Letter", eml.getAbsolutePath());
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+        assertSinglePagePdf(tmpPdf, PDRectangle.LETTER, bodyText);
+        assertPdfTextDoesNotContain(tmpPdf, markerText);
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
+    public void main_localFileReferenceRequiresExplicitExtParam() throws Exception {
+        File workDir = temporaryFolder.newFolder();
+        File marker = new File(workDir, "local-file-marker.html");
+        String markerText = "LOCAL_FILE_MARKER_8e3b";
+        Files.asCharSink(marker, StandardCharsets.UTF_8).write("<html><body><p>" + markerText + "</p></body></html>");
+
+        String bodyText = "BODY_MARKER_LOCAL_FILE_8e3b";
+        File eml = writeHtmlEml(
+                workDir, "local-file-reference.eml", "Local file reference", "sender@example.com", "<html><body><p>" + bodyText + "</p><iframe src=\"" + marker.toURI() + "\" style=\"width:600px;height:120px\"></iframe></body></html>");
+        File tmpPdf = new File(workDir, "output.pdf");
+
+        // This positive control documents the public-API bypass through extParams.
+        LogLevel old = Logger.level;
+        Logger.level = LogLevel.Error;
+        try {
+            MimeMessageConverter.convertToPdf(
+                    eml.getAbsolutePath(), tmpPdf.getAbsolutePath(), false, false, false, null, Arrays.asList("--page-size", "Letter", "--dpi", "300", "--enable-local-file-access"));
+        } finally {
+            Logger.level = old;
+        }
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+        assertSinglePagePdf(tmpPdf, PDRectangle.LETTER, bodyText, markerText);
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
+    public void main_headerStyleIsolatedFromBody() throws IOException {
+        File workDir = temporaryFolder.newFolder();
+        String subject = "HEADER_SUBJECT_STYLE_ISOLATION";
+        String from = "header-style@example.com";
+        String bodyText = "BODY_MARKER_STYLE_ISOLATION";
+
+        File eml = writeHtmlEml(
+                workDir, "header-style-isolation.eml", subject, from, "<html><head><style>#header_fields { display: none !important; }</style></head><body><p>" + bodyText + "</p></body></html>");
+        File tmpPdf = new File(workDir, "output.pdf");
+
+        runMain("-o", tmpPdf.getAbsolutePath(), eml.getAbsolutePath());
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+        assertSinglePagePdf(tmpPdf, PDRectangle.A4, subject, from, bodyText);
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
     public void main_attachments() throws IOException, URISyntaxException {
         File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachments.eml").toURI()).getAbsolutePath();
@@ -407,6 +486,13 @@ public class MainTest {
         if (!attachmentDir.delete()) {
             attachmentDir.deleteOnExit();
         }
+    }
+
+    private static File writeHtmlEml(File workDir, String name, String subject, String from, String body) throws IOException {
+        File eml = new File(workDir, name);
+        String emlContent = "Mime-Version: 1.0\r\n" + "Date: Thu, 11 Dec 2014 05:20:45 -0800\r\n" + "Message-ID: <" + name + "@example.com>\r\n" + "From: " + from + "\r\n" + "To: recipient@example.com\r\n" + "Subject: " + subject + "\r\n" + "Content-Type: text/html; charset=utf-8\r\n" + "Content-Transfer-Encoding: 8bit\r\n" + "\r\n" + body;
+        Files.asCharSink(eml, StandardCharsets.UTF_8).write(emlContent);
+        return eml;
     }
 
     private static void runMain(String... args) {
