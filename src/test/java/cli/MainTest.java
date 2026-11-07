@@ -17,7 +17,9 @@
 package cli;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItems;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.base.Throwables;
@@ -31,6 +33,10 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -104,6 +110,8 @@ public class MainTest {
         assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
         assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
+        assertSinglePageLetterPdf(tmpPdf, "FW: RE: yeni projeler", "bolo yükselulupe", "y.aaaat@ibbx.com", "naaa.rddder@aaal.com", "Hallo, Guten Tag!");
+
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
         }
@@ -125,6 +133,8 @@ public class MainTest {
 
         assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
         assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+
+        assertSinglePageLetterPdf(tmpPdf, "FW: RE: yeni projeler", "bolo yükselulupe", "y.aaaat@ibbx.com", "naaa.rddder@aaal.com", "naaa2.rddder2@aaal.com", "Hallo, Guten Tag!");
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
@@ -348,4 +358,19 @@ public class MainTest {
             attachmentDir.deleteOnExit();
         }
     }
+
+    private static void assertSinglePageLetterPdf(File pdf, String... expectedText) throws IOException {
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            assertEquals("Expected a single-page PDF", 1, document.getNumberOfPages());
+            PDRectangle pageSize = document.getPage(0).getMediaBox();
+            assertEquals("Expected Letter page width", PDRectangle.LETTER.getWidth(), pageSize.getWidth(), 0.5f);
+            assertEquals("Expected Letter page height", PDRectangle.LETTER.getHeight(), pageSize.getHeight(), 0.5f);
+
+            String text = new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
+            for (String expected : expectedText) {
+                assertThat("Generated PDF text", text, containsString(expected));
+            }
+        }
+    }
+
 }
