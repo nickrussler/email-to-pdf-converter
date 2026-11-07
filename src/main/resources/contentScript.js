@@ -16,7 +16,7 @@
 
 (function() {
 	f = document.createElement('iframe');
-	f.src = document.getElementById('header-v6a8oxpf48xfzy0rhjra').getAttribute('data-file');
+	f.src = document.getElementById('header-v6a8oxpf48xfzy0rhjra').getAttribute('data-uri');
 	f.border = 0;
 	f.id = 'header-frame-6jk3h6a234g2a3';
 	var fs = f.style;

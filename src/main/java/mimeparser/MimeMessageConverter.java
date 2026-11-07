@@ -20,6 +20,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.html.HtmlEscapers;
+import com.google.common.io.BaseEncoding;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
@@ -75,7 +76,7 @@ public class MimeMessageConverter {
 
     // html wrapper template for text/plain messages
     private static final String HTML_WRAPPER_TEMPLATE = "<!DOCTYPE html><html><head><style>body{font-size: 0.5cm;}</style><meta charset=\"%s\"><title>title</title></head><body>%s</body></html>";
-    private static final String ADD_HEADER_IFRAME_JS_TAG_TEMPLATE = "<script id=\"header-v6a8oxpf48xfzy0rhjra\" data-file=\"%s\" type=\"text/javascript\">%s</script>";
+    private static final String ADD_HEADER_IFRAME_JS_TAG_TEMPLATE = "<script id=\"header-v6a8oxpf48xfzy0rhjra\" data-uri=\"%s\" type=\"text/javascript\">%s</script>";
     private static final String HEADER_FIELD_TEMPLATE = "<tr><td class=\"header-name\">%s</td><td class=\"header-value\">%s</td></tr>";
     private static final String ATTACHMENT_LIST_TEMPLATE = "<hr>%s<ul>%s</ul>";
     private static final String ATTACHMENT_ITEM_TEMPLATE = "<li>%s</li>";
@@ -273,10 +274,7 @@ public class MimeMessageConverter {
 
         Logger.info("Start conversion to pdf");
 
-        File tmpHtmlHeader = null;
         if (!hideHeaders) {
-            tmpHtmlHeader = File.createTempFile("emailtopdf", ".html");
-
             URL headerResource = MimeMessageConverter.class.getClassLoader().getResource("header.html");
             String tmpHtmlHeaderStr = Resources.toString(headerResource, StandardCharsets.UTF_8);
             String headers = "";
@@ -306,12 +304,12 @@ public class MimeMessageConverter {
                         HEADER_FIELD_TEMPLATE, "Date", HtmlEscapers.htmlEscaper().escape(sentDateStr));
             }
 
-            Files.asCharSink(tmpHtmlHeader, StandardCharsets.UTF_8).write(String.format(tmpHtmlHeaderStr, headers));
+            String headerDataUri = "data:text/html;charset=utf-8;base64," + BaseEncoding.base64().encode(String.format(tmpHtmlHeaderStr, headers).getBytes(StandardCharsets.UTF_8));
 
             // Append this script tag dirty to the bottom
             URL contentScriptResource = MimeMessageConverter.class.getClassLoader().getResource("contentScript.js");
             htmlBody += String.format(
-                    ADD_HEADER_IFRAME_JS_TAG_TEMPLATE, tmpHtmlHeader.toURI(), Resources.toString(contentScriptResource, StandardCharsets.UTF_8));
+                    ADD_HEADER_IFRAME_JS_TAG_TEMPLATE, headerDataUri, Resources.toString(contentScriptResource, StandardCharsets.UTF_8));
         }
 
         // Append attachment filename list to body
@@ -334,7 +332,7 @@ public class MimeMessageConverter {
         Logger.debug("Write pdf to %s", pdf.getAbsolutePath());
 
         List<String> cmd = new ArrayList<>(Arrays.asList(
-                "wkhtmltopdf", "--viewport-size", VIEWPORT_SIZE, "--enable-local-file-access",
+                "wkhtmltopdf", "--viewport-size", VIEWPORT_SIZE,
                 // "--disable-smart-shrinking",
                 "--image-quality", String.valueOf(IMAGE_QUALITY), "--encoding", charsetName));
         cmd.addAll(extParams);
@@ -346,12 +344,6 @@ public class MimeMessageConverter {
 
         if (!tmpHtml.delete()) {
             tmpHtml.deleteOnExit();
-        }
-
-        if (tmpHtmlHeader != null) {
-            if (!tmpHtmlHeader.delete()) {
-                tmpHtmlHeader.deleteOnExit();
-            }
         }
 
         /* ######### Save attachments ######### */
