@@ -19,6 +19,7 @@ package cli;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -34,8 +35,12 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.PDXObject;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.Rule;
 import org.junit.Test;
@@ -110,7 +115,7 @@ public class MainTest {
         assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
         assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
-        assertSinglePageLetterPdf(tmpPdf, "FW: RE: yeni projeler", "bolo yükselulupe", "y.aaaat@ibbx.com", "naaa.rddder@aaal.com", "Hallo, Guten Tag!");
+        assertSinglePagePdf(tmpPdf, PDRectangle.LETTER, "FW: RE: yeni projeler", "bolo yükselulupe", "y.aaaat@ibbx.com", "naaa.rddder@aaal.com", "Hallo, Guten Tag!");
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
@@ -134,7 +139,7 @@ public class MainTest {
         assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
         assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
-        assertSinglePageLetterPdf(tmpPdf, "FW: RE: yeni projeler", "bolo yükselulupe", "y.aaaat@ibbx.com", "naaa.rddder@aaal.com", "naaa2.rddder2@aaal.com", "Hallo, Guten Tag!");
+        assertSinglePagePdf(tmpPdf, PDRectangle.LETTER, "FW: RE: yeni projeler", "bolo yükselulupe", "y.aaaat@ibbx.com", "naaa.rddder@aaal.com", "naaa2.rddder2@aaal.com", "Hallo, Guten Tag!");
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
@@ -158,6 +163,26 @@ public class MainTest {
         assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
         assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
+        assertSinglePagePdf(tmpPdf, PDRectangle.LETTER, "Attachments:", "IMAG0145.jpg", "IMAG0144.jpg");
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
+    public void main_messageWithoutAttachmentList() throws IOException, URISyntaxException {
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
+        String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachments.eml").toURI()).getAbsolutePath();
+
+        runMain("-o", tmpPdf.getAbsolutePath(), eml);
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+
+        assertSinglePagePdf(tmpPdf, PDRectangle.A4, "and katakana");
+        assertPdfTextDoesNotContain(tmpPdf, "Attachments:", "IMAG0144.jpg", "IMAG0145.jpg");
+
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
         }
@@ -180,6 +205,11 @@ public class MainTest {
         assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
         assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
+        assertSinglePagePdf(
+                tmpPdf, PDRectangle.A4, "Testing Manuel Lemos' MIME E-mail composing and sending PHP class: HTML message", "mlemos@acm.org", "mlemos@linux.local", "Hello Manuel,", "MIME E-mail message composing and sending PHP class is working as expected.");
+        // The fixture references two cid images; the renderer emits the <img> logo as an image XObject.
+        assertHasEmbeddedImage(tmpPdf, 150, 35);
+
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
         }
@@ -201,6 +231,26 @@ public class MainTest {
 
         assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
         assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+
+        assertSinglePagePdf(tmpPdf, PDRectangle.A4, "SubjectofTestemail", "to@test.com", "cc@test.com", "Main body of Testemail");
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
+    public void main_simplePlainMessageHiddenHeaders() throws IOException, URISyntaxException {
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
+        String eml = new File(MainTest.class.getClassLoader().getResource("eml/testPlain.eml").toURI()).getAbsolutePath();
+
+        runMain("-o", tmpPdf.getAbsolutePath(), "-hh", eml);
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+
+        assertSinglePagePdf(tmpPdf, PDRectangle.A4, "Hallo, Guten Tag!");
+        assertPdfTextDoesNotContain(tmpPdf, "FW: RE: yeni projeler", "bolo yükselulupe", "y.aaaat@ibbx.com", "naaa.rddder@aaal.com");
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
@@ -359,18 +409,61 @@ public class MainTest {
         }
     }
 
-    private static void assertSinglePageLetterPdf(File pdf, String... expectedText) throws IOException {
+    private static void runMain(String... args) {
+        LogLevel old = Logger.level;
+        Logger.level = LogLevel.Error;
+
+        try {
+            Main.main(args);
+        } finally {
+            Logger.level = old;
+        }
+    }
+
+    private static void assertSinglePagePdf(File pdf, PDRectangle expectedPageSize, String... expectedText) throws IOException {
         try (PDDocument document = Loader.loadPDF(pdf)) {
             assertEquals("Expected a single-page PDF", 1, document.getNumberOfPages());
             PDRectangle pageSize = document.getPage(0).getMediaBox();
-            assertEquals("Expected Letter page width", PDRectangle.LETTER.getWidth(), pageSize.getWidth(), 0.5f);
-            assertEquals("Expected Letter page height", PDRectangle.LETTER.getHeight(), pageSize.getHeight(), 0.5f);
+            assertEquals("Expected page width", expectedPageSize.getWidth(), pageSize.getWidth(), 0.5f);
+            assertEquals("Expected page height", expectedPageSize.getHeight(), pageSize.getHeight(), 0.5f);
 
-            String text = new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
+            String text = normalizedPdfText(document);
             for (String expected : expectedText) {
                 assertThat("Generated PDF text", text, containsString(expected));
             }
         }
+    }
+
+    private static void assertPdfTextDoesNotContain(File pdf, String... unexpectedText) throws IOException {
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            String text = normalizedPdfText(document);
+            for (String unexpected : unexpectedText) {
+                assertThat("Generated PDF text", text, not(containsString(unexpected)));
+            }
+        }
+    }
+
+    private static void assertHasEmbeddedImage(File pdf, int expectedWidth, int expectedHeight) throws IOException {
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            PDResources resources = document.getPage(0).getResources();
+            int imagesWithDimensions = 0;
+
+            for (COSName name : resources.getXObjectNames()) {
+                PDXObject xObject = resources.getXObject(name);
+                if (xObject instanceof PDImageXObject) {
+                    PDImageXObject image = (PDImageXObject) xObject;
+                    if (image.getWidth() == expectedWidth && image.getHeight() == expectedHeight) {
+                        imagesWithDimensions++;
+                    }
+                }
+            }
+
+            assertTrue("Expected an embedded image sized " + expectedWidth + "x" + expectedHeight, imagesWithDimensions > 0);
+        }
+    }
+
+    private static String normalizedPdfText(PDDocument document) throws IOException {
+        return new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
     }
 
 }
