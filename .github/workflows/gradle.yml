@@ -2,25 +2,54 @@ name: Check, Build
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      LANG: C.UTF-8
+      TZ: UTC
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
+    - uses: actions/checkout@v7
       with:
-        java-version: 1.8
+        fetch-depth: 0
+    - name: Set up Corretto JDK 8
+      uses: actions/setup-java@v6
+      with:
+        distribution: corretto
+        java-version: '8'
+    - name: Install archived wkhtmltopdf
+      shell: bash
+      run: |
+        set -euo pipefail
+        package="$RUNNER_TEMP/wkhtmltox.deb"
+        curl --fail --location --retry 3 \
+          https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb \
+          --output "$package"
+        echo "ee88d74834bdec650f7432c7d3ef1c981e42ae7a762a75a01f7f5da59abc18d5  $package" | sha256sum --check
+        sudo apt-get update
+        sudo apt-get install --yes --no-install-recommends fontconfig fonts-dejavu-core "$package"
+        wkhtmltopdf --version
     - name: Formatting Check
-      run: ./gradlew spotlessCheck
+      run: ./gradlew --no-daemon spotlessCheck
     - name: Tests
-      run: ./gradlew check
+      run: ./gradlew --no-daemon check
     - name: Build Jar
-      run: ./gradlew shadowJar
+      run: ./gradlew --no-daemon shadowJar
+    - name: Archive test reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-reports
+        path: |
+          build/reports/
+          build/test-results/
     - name: Archive production artifacts
       uses: actions/upload-artifact@v4
       with:
-          name: jar
-          path: build/libs/emailconverter-*-all.jar
+        name: jar
+        path: build/libs/emailconverter-*-all.jar

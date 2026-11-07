@@ -31,7 +31,9 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import util.LogLevel;
 import util.Logger;
 
@@ -41,6 +43,9 @@ import util.Logger;
  * @author Nick Russler
  */
 public class MainTest {
+
+    @Rule
+    public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     public static void convertFolderTest() throws FileNotFoundException, UnsupportedEncodingException {
         PrintWriter writer = new PrintWriter("d:\\mylog.txt", "UTF-8");
@@ -84,7 +89,7 @@ public class MainTest {
 
     @Test
     public void main_simplePlainMessage() throws IOException, URISyntaxException {
-        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testPlain.eml").toURI()).getAbsolutePath();
 
         String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-s", "Letter", eml};
@@ -96,8 +101,8 @@ public class MainTest {
 
         Logger.level = old;
 
-        assertTrue(tmpPdf.exists());
-        // assertTrue(tmpPdf.length() > 0);
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
@@ -106,7 +111,7 @@ public class MainTest {
 
     @Test
     public void main_simplePlainMessageWithCC() throws IOException, URISyntaxException {
-        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testPlainWithCC.eml").toURI()).getAbsolutePath();
 
         String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-s", "Letter", eml};
@@ -118,7 +123,8 @@ public class MainTest {
 
         Logger.level = old;
 
-        assertTrue(tmpPdf.exists());
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
@@ -127,7 +133,7 @@ public class MainTest {
 
     @Test
     public void main_messageWithAttachmentList() throws IOException, URISyntaxException {
-        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachments.eml").toURI()).getAbsolutePath();
 
         String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-aa", "-s", "Letter", eml};
@@ -139,7 +145,8 @@ public class MainTest {
 
         Logger.level = old;
 
-        assertTrue(tmpPdf.exists());
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
@@ -148,7 +155,7 @@ public class MainTest {
 
     @Test
     public void main_htmlMessage() throws IOException, URISyntaxException {
-        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testHtml.eml").toURI()).getAbsolutePath();
 
         String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), eml};
@@ -160,8 +167,8 @@ public class MainTest {
 
         Logger.level = old;
 
-        assertTrue(tmpPdf.exists());
-        // assertTrue(tmpPdf.length() > 0);
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
@@ -170,7 +177,7 @@ public class MainTest {
 
     @Test
     public void main_msg_htmlMessage() throws IOException, URISyntaxException {
-        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String msgFilePath = new File(MainTest.class.getClassLoader().getResource("msg/testHtml.msg").toURI()).getAbsolutePath();
 
         String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), msgFilePath};
@@ -182,8 +189,8 @@ public class MainTest {
 
         Logger.level = old;
 
-        assertTrue(tmpPdf.exists());
-        // assertTrue(tmpPdf.length() > 0);
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
@@ -192,7 +199,7 @@ public class MainTest {
 
     @Test
     public void main_attachments() throws IOException, URISyntaxException {
-        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachments.eml").toURI()).getAbsolutePath();
 
         String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-a", eml};
@@ -203,6 +210,9 @@ public class MainTest {
         Main.main(args);
 
         Logger.level = old;
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
         File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) + "-attachments");
 
@@ -227,7 +237,7 @@ public class MainTest {
 
     @Test
     public void main_attachmentsDuplicateName() throws IOException, URISyntaxException {
-        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachmentsDuplicateAttachmentName.eml").toURI()).getAbsolutePath();
 
         String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-a", eml};
@@ -238,6 +248,9 @@ public class MainTest {
         Main.main(args);
 
         Logger.level = old;
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
         File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) + "-attachments");
 
@@ -262,7 +275,7 @@ public class MainTest {
 
     @Test
     public void main_attachmentsWithSlashInAttachmentName() throws IOException, URISyntaxException {
-        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachmentsWithSlashInName.eml").toURI()).getAbsolutePath();
 
         String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-a", eml};
@@ -273,6 +286,9 @@ public class MainTest {
         Main.main(args);
 
         Logger.level = old;
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
         File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) + "-attachments");
 
@@ -297,7 +313,7 @@ public class MainTest {
 
     @Test
     public void main_attachmentsSniffFileExtension() throws IOException, URISyntaxException {
-        File tmpPdf = File.createTempFile("emailtopdf", ".pdf");
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachmentsNoName.eml").toURI()).getAbsolutePath();
 
         String[] args = new String[]{"-o", tmpPdf.getAbsolutePath(), "-a", eml};
@@ -308,6 +324,9 @@ public class MainTest {
         Main.main(args);
 
         Logger.level = old;
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
 
         File attachmentDir = new File(tmpPdf.getParent(), Files.getNameWithoutExtension(tmpPdf.getName()) + "-attachments");
 
