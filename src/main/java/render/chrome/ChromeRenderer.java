@@ -124,6 +124,8 @@ public final class ChromeRenderer implements PdfRenderer {
 
             cdp.sendCommand("Page.enable");
             if (!options.isJavaScriptEnabled()) {
+                // Defense in depth. This only affects the attached page target and does not cover
+                // out-of-process iframes; the browser-wide --blink-settings guard above does.
                 JsonObject disabled = new JsonObject();
                 disabled.addProperty("value", true);
                 cdp.sendCommand("Emulation.setScriptExecutionDisabled", disabled);
