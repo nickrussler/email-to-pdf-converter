@@ -18,6 +18,7 @@ package render;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -28,8 +29,18 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -63,6 +74,53 @@ public class ChromeRendererTest {
             assertFalse("Cross-site iframe executed JavaScript while disabled: " + text, text.contains("CHILD_SCRIPT_MARKER"));
         } finally {
             server.stop(0);
+        }
+    }
+
+    @Test
+    public void devToolsDiscoveryIgnoresGlobalProxySelector() throws Exception {
+        ProxySelector original = ProxySelector.getDefault();
+        final ServerSocket proxyServer = new ServerSocket(0, 50, InetAddress.getLoopbackAddress());
+        final AtomicInteger proxyConnections = new AtomicInteger();
+        Thread proxyThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (!proxyServer.isClosed()) {
+                    try (Socket ignored = proxyServer.accept()) {
+                        proxyConnections.incrementAndGet();
+                    } catch (IOException ignored) {
+                        return;
+                    }
+                }
+            }
+        });
+        proxyThread.setDaemon(true);
+        proxyThread.start();
+
+        ProxySelector.setDefault(new ProxySelector() {
+            @Override
+            public List<Proxy> select(URI uri) {
+                return Collections.singletonList(new Proxy(
+                        Proxy.Type.HTTP, new InetSocketAddress(InetAddress.getLoopbackAddress(), proxyServer.getLocalPort())));
+            }
+
+            @Override
+            public void connectFailed(URI uri, SocketAddress address, IOException exception) {
+            }
+        });
+
+        try {
+            File output = new File(temporaryFolder.newFolder(), "proxy-bypass.pdf");
+            RenderOptions options = new RenderOptions(
+                    RenderOptions.Renderer.CHROME, System.getenv("CHROME_PATH"), null, "A4", "300", false, null);
+            new ChromeRenderer(options).render(
+                    "<html><body><p>PROXY_BYPASS_MARKER</p></body></html>", StandardCharsets.UTF_8, output);
+
+            assertThat(pdfText(output), containsString("PROXY_BYPASS_MARKER"));
+            assertEquals("DevTools discovery must not connect through the global proxy", 0, proxyConnections.get());
+        } finally {
+            ProxySelector.setDefault(original);
+            proxyServer.close();
         }
     }
 
