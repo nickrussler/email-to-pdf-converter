@@ -94,6 +94,14 @@ public class CommandLineParameters {
     private String rendererExecutable;
 
     @Parameter(
+            names = {"--browser-download"}, description = "Chrome browser source: auto, never, once, latest (default auto).")
+    private String browserDownload = "auto";
+
+    @Parameter(
+            names = {"--browser-cache-dir"}, description = "Directory for an automatically downloaded Chrome headless shell.")
+    private String browserCacheDir;
+
+    @Parameter(
             names = {"--dangerous-enable-javascript"}, description = "Execute JavaScript contained in the email HTML. This is unsafe and disabled by default.")
     private boolean dangerousEnableJavaScript = false;
 
@@ -231,6 +239,22 @@ public class CommandLineParameters {
 
     public void setRendererExecutable(String rendererExecutable) {
         this.rendererExecutable = rendererExecutable;
+    }
+
+    public String getBrowserDownload() {
+        return browserDownload;
+    }
+
+    public void setBrowserDownload(String browserDownload) {
+        this.browserDownload = browserDownload;
+    }
+
+    public String getBrowserCacheDir() {
+        return browserCacheDir;
+    }
+
+    public void setBrowserCacheDir(String browserCacheDir) {
+        this.browserCacheDir = browserCacheDir;
     }
 
     public boolean isDangerousEnableJavaScript() {

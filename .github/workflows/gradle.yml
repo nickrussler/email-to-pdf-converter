@@ -41,6 +41,13 @@ jobs:
       run: ./gradlew --no-daemon spotlessCheck
     - name: Tests
       run: ./gradlew --no-daemon check
+    - name: Chrome download e2e
+      env:
+        CHROME_DOWNLOAD_E2E: "1"
+        CHROME_DOWNLOAD_CACHE: ${{ runner.temp }}/chrome-download-cache
+      run: |
+        rm -rf "$CHROME_DOWNLOAD_CACHE"
+        ./gradlew --no-daemon cleanTest test --tests render.chrome.ChromeDownloadE2ETest
     - name: Build Jar
       run: ./gradlew --no-daemon shadowJar
     - name: Archive test reports

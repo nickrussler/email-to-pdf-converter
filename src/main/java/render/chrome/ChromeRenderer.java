@@ -47,7 +47,7 @@ import render.RenderOptions;
 import util.Logger;
 
 /**
- * Renders HTML with an installed Chrome/Chromium/Edge browser using a minimal CDP client.
+ * Renders HTML with an installed or downloaded Chrome browser using a minimal CDP client.
  */
 public final class ChromeRenderer implements PdfRenderer {
     private static final long START_TIMEOUT_MS = 15000;
@@ -59,6 +59,7 @@ public final class ChromeRenderer implements PdfRenderer {
     private static final double PRINT_MARGIN_MM = 10.0;
 
     private final RenderOptions options;
+    private volatile ChromeBrowserProvisioner.Browser resolvedBrowser;
 
     public ChromeRenderer(RenderOptions options) {
         this.options = options;
@@ -93,15 +94,21 @@ public final class ChromeRenderer implements PdfRenderer {
     }
 
     private void renderHtml(String html, File outputPdf, double widthPoints, double heightPoints, double marginMm, boolean printBackground) throws Exception {
-        String executable = resolveExecutable();
+        ChromeBrowserProvisioner.Browser browserInfo = resolveBrowser();
+        String executable = browserInfo.getExecutable();
         Path userDataDir = Files.createTempDirectory("emailtopdf-chrome-");
         File browserLog = File.createTempFile("emailtopdf-chrome-", ".log");
         Process browser = null;
         ChromeCdpClient cdp = null;
         try {
             int port = freePort();
-            List<String> command = new ArrayList<>(Arrays.asList(
-                    executable, "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--remote-debugging-port=" + port, "--user-data-dir=" + userDataDir.toAbsolutePath(), "about:blank"));
+            List<String> command = new ArrayList<>();
+            command.add(executable);
+            if (!browserInfo.isHeadlessShell()) {
+                command.add("--headless=new");
+            }
+            command.addAll(Arrays.asList(
+                    "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--remote-debugging-port=" + port, "--user-data-dir=" + userDataDir.toAbsolutePath(), "about:blank"));
             if (noSandbox()) {
                 command.add(1, "--no-sandbox");
             }
@@ -172,9 +179,24 @@ public final class ChromeRenderer implements PdfRenderer {
         }
     }
 
+    private ChromeBrowserProvisioner.Browser resolveBrowser() throws Exception {
+        ChromeBrowserProvisioner.Browser browser = resolvedBrowser;
+        if (browser == null) {
+            synchronized (this) {
+                browser = resolvedBrowser;
+                if (browser == null) {
+                    browser = new ChromeBrowserProvisioner(options).resolve();
+                    resolvedBrowser = browser;
+                    Logger.debug("Use %s", browser.describe());
+                }
+            }
+        }
+        return browser;
+    }
+
     private void logUnsupportedOptions() {
         if (options.getProxy() != null && !options.getProxy().isEmpty()) {
-            Logger.error("Chrome renderer does not support proxy settings yet; ignoring proxy %s", options.getProxy());
+            Logger.error("Chrome page rendering does not use proxy settings yet; ignoring proxy for page requests: %s", options.getProxy());
         }
         if (options.getDpi() != null && !options.getDpi().isEmpty() && !"300".equals(options.getDpi())) {
             Logger.error("Chrome renderer ignores the DPI setting: %s", options.getDpi());
@@ -184,11 +206,15 @@ public final class ChromeRenderer implements PdfRenderer {
         }
     }
 
-    private String resolveExecutable() {
-        return resolveExecutable(options.getExecutable());
+    static String resolveExecutable(String configuredExecutable) {
+        String executable = findInstalledExecutable(configuredExecutable);
+        if (executable == null) {
+            throw new IllegalStateException("Chrome/Chromium/Edge executable not found. Install one or set CHROME_PATH.");
+        }
+        return executable;
     }
 
-    static String resolveExecutable(String configuredExecutable) {
+    static String findInstalledExecutable(String configuredExecutable) {
         String configured = configuredExecutable;
         if (configured != null && !configured.trim().isEmpty()) {
             return requireExecutable(configured.trim());
@@ -213,7 +239,7 @@ public final class ChromeRenderer implements PdfRenderer {
             }
         }
 
-        throw new IllegalStateException("Chrome/Chromium/Edge executable not found. Install one or set CHROME_PATH.");
+        return null;
     }
 
     private static void addWindowsCandidates(List<String> candidates) {

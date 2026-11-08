@@ -3,7 +3,7 @@
 
 This software can be used to convert email files (eml or msg) to pdf files. It can be used as a library, command line tool or desktop application with its GUI.
 
-The conversion is done by parsing (and cleaning) the mime/structure, converting it to html and then using [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) or an installed Chrome/Chromium/Edge browser to convert the generated html to a pdf file.
+The conversion is done by parsing (and cleaning) the mime/structure, converting it to html and then using [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf), an installed Chrome/Chromium/Edge browser, or an automatically downloaded Chrome headless shell to convert the generated html to a pdf file.
 
 It also handles inline images, corrupt mime headers and can use a proxy.
 
@@ -14,7 +14,7 @@ JavaScript in email HTML is not executed during conversion; script tags are rend
 You need :
 
 * a complete jre, not a headless one (on Debian, for example, you need to have `openjdk-11-jre` installed);
-* either [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) in your $PATH (default renderer) or an installed Chrome/Chromium/Edge browser for `--renderer chrome`
+* either [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) in your $PATH (default renderer) or a browser for `--renderer chrome`: an installed Chrome/Chromium/Edge browser, or allow the converter to download a Chrome headless shell
 
 ### Download
 You can download the lates binaries [**here**](//github.com/nickrussler/email-to-pdf-converter/releases/latest).
@@ -65,6 +65,11 @@ Usage: EmailToPDFConverter [options] <email-file>
       Default: wkhtmltopdf
     --renderer-executable
       Path to the wkhtmltopdf or Chrome/Chromium executable.
+    --browser-download
+      Chrome browser source: auto, never, once, latest (default auto).
+      Default: auto
+    --browser-cache-dir
+      Directory for an automatically downloaded Chrome headless shell.
     --dangerous-enable-javascript
       Execute JavaScript contained in the email HTML. This is unsafe and
       disabled by default.
@@ -84,6 +89,17 @@ Usage: EmailToPDFConverter [options] <email-file>
       Default: false
   ```
 E.g. ``java -jar emailconverter-2.1.1-all.jar example.eml`` (you need [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH)
+
+With `--renderer chrome`, browser selection works as follows:
+
+* `auto` uses an installed Chrome/Chromium/Edge browser first, then a cached downloaded shell, and finally downloads a Chrome headless shell.
+* `never` uses an installed browser or cached shell and never downloads.
+* `once` uses the managed headless shell, downloading it only when no cached copy exists.
+* `latest` uses the managed headless shell and checks for a newer Stable version, downloading it when necessary. It checks the metadata endpoint on each conversion.
+
+Downloaded shells are cached per version and platform. Use `--browser-cache-dir` to change the cache location. `auto`, `never`, and `once` can reuse a cached shell without a metadata request.
+
+Automatic download supports glibc-based Linux x86-64/ARM64, macOS Intel/Apple Silicon, and Windows x86/x64. It is not available on musl-based Linux (for example Alpine) or Windows ARM64; install Chromium/Chrome or use `--renderer-executable` there.
 
 ### How to Build
 You need to git clone this repository. The build will fail if you remove the .git folder (e.g. download this as zip from github).
