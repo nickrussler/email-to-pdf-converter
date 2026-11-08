@@ -244,6 +244,25 @@ public class MainTest {
     }
 
     @Test
+    public void main_msg_richtextMessage() throws IOException, URISyntaxException {
+        File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
+        String msgFilePath = new File(MainTest.class.getClassLoader().getResource("msg/testRichtext.msg").toURI()).getAbsolutePath();
+
+        runMain("-o", tmpPdf.getAbsolutePath(), msgFilePath);
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+
+        assertSinglePagePdf(
+                tmpPdf, PDRectangle.A4, "Hello, this is a test in rich text format", "Regards,", "John Doe", "john.doe@outlook.com", "RichText Test");
+        assertPdfTextDoesNotContain(tmpPdf, "Default Paragraph Font", "Normal Table", "HYPERLINK \"mailto:", "E-MailFormatvorlage");
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
     public void main_simplePlainMessageHiddenHeaders() throws IOException, URISyntaxException {
         File tmpPdf = new File(temporaryFolder.newFolder(), "output.pdf");
         String eml = new File(MainTest.class.getClassLoader().getResource("eml/testPlain.eml").toURI()).getAbsolutePath();
