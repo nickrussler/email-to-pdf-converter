@@ -38,14 +38,17 @@ import java.util.Date;
 import java.util.List;
 import mimeparser.MimeMessageConverter;
 import mimeparser.PdfContentHeightMeasurer;
+import render.RenderOptions;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -473,6 +476,40 @@ public class MainTest {
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
         }
+    }
+
+    @Test
+    public void main_wkhtmltopdfNonZeroExitWithPdfStillExtractsAttachments() throws Exception {
+        Assume.assumeFalse("POSIX shell script test", System.getProperty("os.name").toLowerCase().contains("win"));
+
+        File workDir = temporaryFolder.newFolder();
+        File fakePdf = new File(workDir, "fake.pdf");
+        try (PDDocument document = new PDDocument()) {
+            document.addPage(new PDPage(PDRectangle.LETTER));
+            document.save(fakePdf);
+        }
+
+        File fakeWkhtmltopdf = new File(workDir, "wkhtmltopdf");
+        Files.asCharSink(fakeWkhtmltopdf, StandardCharsets.UTF_8).write("#!/bin/sh\nfor last in \"$@\"; do :; done\ncp \"$(dirname \"$0\")/fake.pdf\" \"$last\"\nexit 1\n");
+        assertTrue(fakeWkhtmltopdf.setExecutable(true));
+
+        File eml = new File(MainTest.class.getClassLoader().getResource("eml/testAttachments.eml").toURI());
+        File tmpPdf = new File(workDir, "output.pdf");
+        RenderOptions options = new RenderOptions(RenderOptions.Renderer.WKHTMLTOPDF, fakeWkhtmltopdf.getAbsolutePath(), null, "Letter", "300", false, null);
+
+        LogLevel old = Logger.level;
+        Logger.level = LogLevel.Error;
+        try {
+            MimeMessageConverter.convertToPdf(eml.getAbsolutePath(), tmpPdf.getAbsolutePath(), true, false, true, null, options);
+        } finally {
+            Logger.level = old;
+        }
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile() && tmpPdf.length() > 0);
+
+        File attachmentDir = new File(tmpPdf.getParent(), "output-attachments");
+        assertTrue("Expected extracted attachments directory: " + attachmentDir, attachmentDir.isDirectory());
+        assertThat(Arrays.asList(attachmentDir.list()), hasItems("IMAG0144.jpg", "IMAG0145.jpg"));
     }
 
     @Test
