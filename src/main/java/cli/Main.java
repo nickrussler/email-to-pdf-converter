@@ -24,9 +24,8 @@ import gui.MainWindow;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.ArrayList;
-import java.util.List;
 import mimeparser.MimeMessageConverter;
+import render.RenderOptions;
 import util.HttpUtils;
 import util.LogLevel;
 import util.Logger;
@@ -94,7 +93,7 @@ public class Main {
             }
         }
 
-        List<String> extParams = new ArrayList<>();
+        String proxy = null;
 
         if ("auto".equalsIgnoreCase(cli.getProxy())) {
             Proxy defaultProxy = HttpUtils.getDefaultProxy();
@@ -105,26 +104,20 @@ public class Main {
             }
 
             InetSocketAddress defaultProxyAddress = (InetSocketAddress) defaultProxy.address();
-            String proxy = defaultProxy.type().toString() + "://" + defaultProxyAddress.toString();
-
-            extParams.add("--proxy");
-            extParams.add(proxy.toLowerCase());
+            proxy = defaultProxy.type().toString() + "://" + defaultProxyAddress.toString();
+            proxy = proxy.toLowerCase();
             Logger.debug("Use default proxy %s", proxy);
         } else if (!Strings.isNullOrEmpty(cli.getProxy())) {
-            extParams.add("--proxy");
-            extParams.add(cli.getProxy());
-            Logger.debug("Use proxy from parameters %s", cli.getProxy());
+            proxy = cli.getProxy();
+            Logger.debug("Use proxy from parameters %s", proxy);
         }
 
-        extParams.add("--page-size");
-        extParams.add(cli.getPageSize());
-
-        extParams.add("--dpi");
-        extParams.add(cli.getDPI());
+        RenderOptions renderOptions = new RenderOptions(
+                RenderOptions.Renderer.WKHTMLTOPDF, null, proxy, cli.getPageSize(), cli.getDPI(), false, null);
 
         try {
             MimeMessageConverter.convertToPdf(
-                    in, out, cli.isHideHeaders(), cli.isAddAttachmentNames(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), extParams);
+                    in, out, cli.isHideHeaders(), cli.isAddAttachmentNames(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), renderOptions);
         } catch (Exception e) {
             Logger.error("The email could not be converted. Error: %s", Throwables.getStackTraceAsString(e));
         }

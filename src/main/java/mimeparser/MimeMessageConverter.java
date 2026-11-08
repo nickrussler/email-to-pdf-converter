@@ -30,6 +30,8 @@ import jakarta.mail.internet.MimeUtility;
 import org.apache.tika.mime.MimeTypes;
 import org.simplejavamail.api.email.AttachmentResource;
 import org.simplejavamail.converter.EmailConverter;
+import render.PdfRenderer;
+import render.RenderOptions;
 import util.*;
 
 import java.io.*;
@@ -80,8 +82,6 @@ public class MimeMessageConverter {
     private static final String HEADER_PADDING_TEMPLATE = "<style>html{padding-top:%dpx !important;}</style>";
     private static final String HEADER_FRAME_ID = "header-frame-6jk3h6a234g2a3";
     private static final int HEADER_FRAME_WIDTH = 1000;
-    private static final int HEADER_MIN_HEIGHT = 150;
-    private static final int HEADER_PROBE_PAGE_HEIGHT = 5000;
     private static final String HEADER_FIELD_TEMPLATE = "<tr><td class=\"header-name\">%s</td><td class=\"header-value\">%s</td></tr>";
     private static final String ATTACHMENT_LIST_TEMPLATE = "<hr>%s<ul>%s</ul>";
     private static final String ATTACHMENT_ITEM_TEMPLATE = "<li>%s</li>";
@@ -94,69 +94,7 @@ public class MimeMessageConverter {
     private static final Pattern IMG_CID_REGEX = Pattern.compile("cid:(.*?)[\"']", Pattern.DOTALL);
     private static final Pattern IMG_CID_PLAIN_REGEX = Pattern.compile("\\[cid:(.*?)\\]", Pattern.DOTALL);
 
-    private static final String VIEWPORT_SIZE = "2480x3508";
-    private static final int IMAGE_QUALITY = 100;
-
     private static final DateFormat DATE_FORMATTER = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG);
-
-    /**
-     * Execute a command and redirect its output to the standard output.
-     *
-     * @param command list of the command and its parameters
-     */
-    private static int execCommand(List<String> command) {
-        try {
-            ProcessBuilder pb = new ProcessBuilder(command);
-
-            if (Logger.level.compareTo(LogLevel.Info) >= 0) {
-                pb.inheritIO();
-            }
-
-            Process p = pb.start();
-            return p.waitFor();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }
-
-    /**
-     * Measure the generated header with a JavaScript-free wkhtmltopdf probe PDF.
-     */
-    private static int measureHeaderHeight(String headerHtml) {
-        File tmpHeader = null;
-        File tmpProbe = null;
-        try {
-            tmpHeader = File.createTempFile("emailtopdf-header", ".html");
-            Files.asCharSink(tmpHeader, StandardCharsets.UTF_8).write(headerHtml);
-
-            tmpProbe = File.createTempFile("emailtopdf-header-probe", ".pdf");
-            List<String> cmd = new ArrayList<>(Arrays.asList(
-                    "wkhtmltopdf", "--disable-javascript", "--page-width", HEADER_FRAME_WIDTH + "px", "--page-height", HEADER_PROBE_PAGE_HEIGHT + "px", "--margin-top", "0", "--margin-bottom", "0", "--margin-left", "0", "--margin-right", "0", "--disable-smart-shrinking", "--quiet", tmpHeader.getAbsolutePath(), tmpProbe.getAbsolutePath()));
-
-            Logger.debug("Execute: %s", Joiner.on(' ').join(cmd));
-            int exitCode = execCommand(cmd);
-            if (exitCode != 0 || !tmpProbe.isFile() || tmpProbe.length() == 0) {
-                Logger.error("Could not measure the header height, using %dpx. Probe exit code: %d", HEADER_MIN_HEIGHT, exitCode);
-                return HEADER_MIN_HEIGHT;
-            }
-
-            int measuredHeight = PdfContentHeightMeasurer.measureContentHeightPx(tmpProbe, HEADER_FRAME_WIDTH);
-            return Math.max(measuredHeight, HEADER_MIN_HEIGHT);
-        } catch (Exception e) {
-            Logger.error("Could not measure the header height, using %dpx. Error: %s", HEADER_MIN_HEIGHT, e);
-            return HEADER_MIN_HEIGHT;
-        } finally {
-            deleteTempFile(tmpHeader);
-            deleteTempFile(tmpProbe);
-        }
-    }
-
-    private static void deleteTempFile(File file) {
-        if (file != null && !file.delete()) {
-            file.deleteOnExit();
-        }
-    }
 
     private static String insertHeaderIframe(String htmlBody, String iframeHtml) {
         Matcher matcher = HTML_BODY_OPEN_REGEX.matcher(htmlBody);
@@ -172,6 +110,16 @@ public class MimeMessageConverter {
      * @throws Exception
      */
     public static void convertToPdf(String emailFilePath, String pdfOutputPath, boolean hideHeaders, boolean addAttachmentNames, boolean extractAttachments, String attachmentsdir, List<String> extParams) throws Exception {
+        convertToPdf(emailFilePath, pdfOutputPath, hideHeaders, addAttachmentNames, extractAttachments, attachmentsdir, RenderOptions.wkhtmltopdf(extParams));
+    }
+
+    /**
+     * Convert an email (eml, msg) file to PDF with explicit renderer settings.
+     *
+     * @throws Exception
+     */
+    public static void convertToPdf(String emailFilePath, String pdfOutputPath, boolean hideHeaders, boolean addAttachmentNames, boolean extractAttachments, String attachmentsdir, RenderOptions renderOptions) throws Exception {
+        PdfRenderer renderer = PdfRenderer.create(renderOptions);
         Logger.info("Start converting %s to %s", emailFilePath, pdfOutputPath);
 
         final MimeMessage message;
@@ -360,7 +308,7 @@ public class MimeMessageConverter {
 
             String headerHtml = String.format(tmpHtmlHeaderStr, headers);
             String headerDataUri = "data:text/html;charset=utf-8;base64," + BaseEncoding.base64().encode(headerHtml.getBytes(StandardCharsets.UTF_8));
-            int headerHeight = measureHeaderHeight(headerHtml);
+            int headerHeight = renderer.measureHeaderHeight(headerHtml, HEADER_FRAME_WIDTH);
 
             String iframeHtml = String.format(
                     ADD_HEADER_IFRAME_HTML_TEMPLATE, HEADER_FRAME_ID, headerDataUri, HEADER_FRAME_WIDTH, headerHeight);
@@ -380,27 +328,9 @@ public class MimeMessageConverter {
             }
         }
 
-        File tmpHtml = File.createTempFile("emailtopdf", ".html");
-        Logger.debug("Write html to temporary file %s", tmpHtml.getAbsolutePath());
-        Files.asCharSink(tmpHtml, Charset.forName(charsetName)).write(htmlBody);
-
         File pdf = new File(pdfOutputPath);
         Logger.debug("Write pdf to %s", pdf.getAbsolutePath());
-
-        List<String> cmd = new ArrayList<>(Arrays.asList(
-                "wkhtmltopdf", "--viewport-size", VIEWPORT_SIZE,
-                // "--disable-smart-shrinking",
-                "--image-quality", String.valueOf(IMAGE_QUALITY), "--encoding", charsetName, "--disable-javascript"));
-        cmd.addAll(extParams);
-        cmd.add(tmpHtml.getAbsolutePath());
-        cmd.add(pdf.getAbsolutePath());
-
-        Logger.debug("Execute: %s", Joiner.on(' ').join(cmd));
-        execCommand(cmd);
-
-        if (!tmpHtml.delete()) {
-            tmpHtml.deleteOnExit();
-        }
+        renderer.render(htmlBody, Charset.forName(charsetName), pdf);
 
         /* ######### Save attachments ######### */
         if (extractAttachments) {
