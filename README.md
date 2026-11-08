@@ -3,18 +3,18 @@
 
 This software can be used to convert email files (eml or msg) to pdf files. It can be used as a library, command line tool or desktop application with its GUI.
 
-The conversion is done by parsing (and cleaning) the mime/structure, converting it to html and then using [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) to convert the generated html to a pdf file.
+The conversion is done by parsing (and cleaning) the mime/structure, converting it to html and then using [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) or an installed Chrome/Chromium/Edge browser to convert the generated html to a pdf file.
 
 It also handles inline images, corrupt mime headers and can use a proxy.
 
-JavaScript in email HTML is not executed during conversion; script tags are rendered inert.
+JavaScript in email HTML is not executed during conversion; script tags are rendered inert. Use `--dangerous-enable-javascript` only if you explicitly need to execute scripts.
 
 
 ### Prerequisites
 You need :
 
 * a complete jre, not a headless one (on Debian, for example, you need to have `openjdk-11-jre` installed);
-* [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) needs to be in your $PATH
+* either [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) in your $PATH (default renderer) or an installed Chrome/Chromium/Edge browser for `--renderer chrome`
 
 ### Download
 You can download the lates binaries [**here**](//github.com/nickrussler/email-to-pdf-converter/releases/latest).
@@ -54,11 +54,21 @@ Usage: EmailToPDFConverter [options] <email-file>
       Filepath of the produced PDF document. If this option is ommited the PDF
       will be placed alongside the email File.
     -s, --page-size
-      Set wkhtmltopdf paper size to: A4, Letter, etc. (default A4)
+      Set paper size to: A0-A9, B0-B10, C5E, Comm10E, DLE, Executive,
+      Folio, Ledger, Legal, Letter, Tabloid (default A4)
       Default: A4
     -r, --dpi
-      Set wkhtmltopdf DPI. (default 300)
+      Set wkhtmltopdf DPI. Ignored by the Chrome renderer. (default 300)
       Default: 300
+    --renderer
+      Renderer to use: wkhtmltopdf, chrome (default wkhtmltopdf)
+      Default: wkhtmltopdf
+    --renderer-executable
+      Path to the wkhtmltopdf or Chrome/Chromium executable.
+    --dangerous-enable-javascript
+      Execute JavaScript contained in the email HTML. This is unsafe and
+      disabled by default.
+      Default: false
     -p, --proxy
       Proxy (e.g. "http://10.64.1.74:81"). If "auto" is supplied the default
       system proxy will be used.

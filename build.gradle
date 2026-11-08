@@ -47,6 +47,8 @@ dependencies {
     implementation 'org.simplejavamail:outlook-module:9.3.9'
     implementation 'org.slf4j:slf4j-simple:2.0.20'
     implementation 'org.apache.pdfbox:pdfbox:3.0.8'
+    implementation 'org.java-websocket:Java-WebSocket:1.6.0'
+    implementation 'com.google.code.gson:gson:2.15.0'
 
     testImplementation 'junit:junit:4.+'
     testImplementation 'org.hamcrest:hamcrest-all:1.+'

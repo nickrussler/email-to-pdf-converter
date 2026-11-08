@@ -18,6 +18,7 @@ package render;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import render.chrome.ChromeRenderer;
 
 /**
  * Renders prepared HTML to a PDF file.
@@ -53,7 +54,7 @@ public interface PdfRenderer {
             case WKHTMLTOPDF:
                 return new WkhtmltopdfRenderer(options);
             case CHROME:
-                throw new UnsupportedOperationException("Chrome renderer is not implemented yet");
+                return new ChromeRenderer(options);
             default:
                 throw new IllegalArgumentException("Unsupported renderer: " + options.getRenderer());
         }
