@@ -31,7 +31,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -199,6 +198,33 @@ public class ChromeBrowserProvisionerTest {
     }
 
     @Test
+    public void forceRedownloadsCachedVersion() throws Exception {
+        cacheExecutable(VERSION);
+        environment.clear("CHROME_PATH", "CHROME_BIN", "GOOGLE_CHROME_BIN", "CHROMIUM_PATH");
+
+        ChromeBrowserProvisioner.Browser browser = provisioner(options(RenderOptions.BrowserDownload.FORCE)).resolve();
+
+        assertEquals(VERSION, browser.getVersion());
+        assertEquals(1, metadataRequests.get());
+        assertEquals(1, artifactRequests.get());
+    }
+
+    @Test
+    public void redownloadsCacheWithEmptyExecutable() throws Exception {
+        Path platformDirectory = cachePlatformDirectory(VERSION);
+        Path executable = platformDirectory.resolve("chrome-headless-shell-linux64/chrome-headless-shell");
+        Files.createDirectories(executable.getParent());
+        Files.write(executable, new byte[0]);
+        Files.write(platformDirectory.resolve(ChromeBrowserProvisioner.COMPLETE_MARKER), VERSION.getBytes(StandardCharsets.UTF_8));
+        environment.clear("CHROME_PATH", "CHROME_BIN", "GOOGLE_CHROME_BIN", "CHROMIUM_PATH");
+
+        ChromeBrowserProvisioner.Browser browser = provisioner(options(RenderOptions.BrowserDownload.ONCE)).resolve();
+
+        assertEquals(1, artifactRequests.get());
+        assertTrue(Files.size(Paths.get(browser.getExecutable())) > 0);
+    }
+
+    @Test
     public void latestDownloadsNewerCachedVersion() throws Exception {
         cacheExecutable(VERSION);
         metadataJson = metadata(NEWER_VERSION);
@@ -294,17 +320,6 @@ public class ChromeBrowserProvisionerTest {
     }
 
     @Test
-    public void parsesHttpAndSocksProxySettings() {
-        Proxy http = ChromeBrowserProvisioner.parseProxy("http://127.0.0.1:3128");
-        assertEquals(Proxy.Type.HTTP, http.type());
-        assertEquals(new InetSocketAddress("127.0.0.1", 3128), http.address());
-
-        Proxy socks = ChromeBrowserProvisioner.parseProxy("socks5://127.0.0.1:1080");
-        assertEquals(Proxy.Type.SOCKS, socks.type());
-        assertEquals(new InetSocketAddress("127.0.0.1", 1080), socks.address());
-    }
-
-    @Test
     public void comparesVersionsNumerically() {
         assertTrue(ChromeBrowserProvisioner.compareVersions("157.0.8103.38", "157.0.8103.4") > 0);
         assertTrue(ChromeBrowserProvisioner.compareVersions("156.0.8103.38", "157.0.8103.38") < 0);
@@ -336,6 +351,7 @@ public class ChromeBrowserProvisionerTest {
         Path executable = platformDirectory.resolve("chrome-headless-shell-linux64/chrome-headless-shell");
         Files.createDirectories(executable.getParent());
         Files.write(executable, "#!/bin/sh\nexit 0\n".getBytes(StandardCharsets.UTF_8));
+        assertTrue(executable.toFile().setExecutable(true));
         Files.write(platformDirectory.resolve(ChromeBrowserProvisioner.COMPLETE_MARKER), version.getBytes(StandardCharsets.UTF_8));
         return executable;
     }

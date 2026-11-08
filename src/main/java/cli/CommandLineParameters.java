@@ -94,7 +94,7 @@ public class CommandLineParameters {
     private String rendererExecutable;
 
     @Parameter(
-            names = {"--browser-download"}, description = "Chrome browser source: auto, never, once, latest (default auto).")
+            names = {"--browser-download"}, description = "Chrome browser source: auto, never, once, latest, force (default auto).")
     private String browserDownload = "auto";
 
     @Parameter(

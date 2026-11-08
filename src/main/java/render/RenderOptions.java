@@ -39,7 +39,7 @@ public final class RenderOptions {
     }
 
     public enum BrowserDownload {
-        AUTO, NEVER, ONCE, LATEST;
+        AUTO, NEVER, ONCE, LATEST, FORCE;
 
         public static BrowserDownload fromName(String name) {
             if (name == null || name.trim().isEmpty() || "auto".equalsIgnoreCase(name.trim())) {
@@ -53,6 +53,9 @@ public final class RenderOptions {
             }
             if ("latest".equalsIgnoreCase(name.trim())) {
                 return LATEST;
+            }
+            if ("force".equalsIgnoreCase(name.trim())) {
+                return FORCE;
             }
             throw new IllegalArgumentException("Unsupported browser download mode: " + name);
         }
