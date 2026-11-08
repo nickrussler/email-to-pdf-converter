@@ -12,6 +12,7 @@ jobs:
     env:
       LANG: C.UTF-8
       TZ: UTC
+      CHROME_PATH: google-chrome
 
     steps:
     - uses: actions/checkout@v7
@@ -34,6 +35,8 @@ jobs:
         sudo apt-get update
         sudo apt-get install --yes --no-install-recommends fontconfig fonts-dejavu-core "$package"
         wkhtmltopdf --version
+    - name: Verify Chrome
+      run: google-chrome --version
     - name: Formatting Check
       run: ./gradlew --no-daemon spotlessCheck
     - name: Tests

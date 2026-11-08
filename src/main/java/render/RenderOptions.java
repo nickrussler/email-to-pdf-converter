@@ -25,7 +25,17 @@ import java.util.List;
  */
 public final class RenderOptions {
     public enum Renderer {
-        WKHTMLTOPDF, CHROME
+        WKHTMLTOPDF, CHROME;
+
+        public static Renderer fromName(String name) {
+            if (name == null || name.trim().isEmpty() || "wkhtmltopdf".equalsIgnoreCase(name.trim())) {
+                return WKHTMLTOPDF;
+            }
+            if ("chrome".equalsIgnoreCase(name.trim()) || "chromium".equalsIgnoreCase(name.trim())) {
+                return CHROME;
+            }
+            throw new IllegalArgumentException("Unsupported renderer: " + name);
+        }
     }
 
     private final Renderer renderer;

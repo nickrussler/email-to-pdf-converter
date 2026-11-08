@@ -112,8 +112,16 @@ public class Main {
             Logger.debug("Use proxy from parameters %s", proxy);
         }
 
+        RenderOptions.Renderer renderer;
+        try {
+            renderer = RenderOptions.Renderer.fromName(cli.getRenderer());
+        } catch (IllegalArgumentException e) {
+            Logger.error("%s", e.getMessage());
+            return;
+        }
+
         RenderOptions renderOptions = new RenderOptions(
-                RenderOptions.Renderer.WKHTMLTOPDF, null, proxy, cli.getPageSize(), cli.getDPI(), false, null);
+                renderer, cli.getRendererExecutable(), proxy, cli.getPageSize(), cli.getDPI(), cli.isDangerousEnableJavaScript(), null);
 
         try {
             MimeMessageConverter.convertToPdf(

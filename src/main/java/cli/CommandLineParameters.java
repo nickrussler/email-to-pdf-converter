@@ -78,12 +78,24 @@ public class CommandLineParameters {
     private boolean gui;
 
     @Parameter(
-            names = {"-s", "--page-size"}, description = "Set wkhtmltopdf paper size to: A4, Letter, etc. (default A4)")
+            names = {"-s", "--page-size"}, description = "Set paper size to: A0-A9, B0-B10, C5E, Comm10E, DLE, Executive, Folio, Ledger, Legal, Letter, Tabloid (default A4)")
     private String pageSize = "A4";
 
     @Parameter(
-            names = {"-r", "--dpi"}, description = "Set wkhtmltopdf DPI. (default 300)")
+            names = {"-r", "--dpi"}, description = "Set wkhtmltopdf DPI. Ignored by the Chrome renderer. (default 300)")
     private String dpi = "300";
+
+    @Parameter(
+            names = {"--renderer"}, description = "Renderer to use: wkhtmltopdf, chrome (default wkhtmltopdf)")
+    private String renderer = "wkhtmltopdf";
+
+    @Parameter(
+            names = {"--renderer-executable"}, description = "Path to the wkhtmltopdf or Chrome/Chromium executable.")
+    private String rendererExecutable;
+
+    @Parameter(
+            names = {"--dangerous-enable-javascript"}, description = "Execute JavaScript contained in the email HTML. This is unsafe and disabled by default.")
+    private boolean dangerousEnableJavaScript = false;
 
     public List<String> getFiles() {
         return files;
@@ -203,5 +215,29 @@ public class CommandLineParameters {
 
     public void setDPI(String dpi) {
         this.dpi = dpi;
+    }
+
+    public String getRenderer() {
+        return renderer;
+    }
+
+    public void setRenderer(String renderer) {
+        this.renderer = renderer;
+    }
+
+    public String getRendererExecutable() {
+        return rendererExecutable;
+    }
+
+    public void setRendererExecutable(String rendererExecutable) {
+        this.rendererExecutable = rendererExecutable;
+    }
+
+    public boolean isDangerousEnableJavaScript() {
+        return dangerousEnableJavaScript;
+    }
+
+    public void setDangerousEnableJavaScript(boolean dangerousEnableJavaScript) {
+        this.dangerousEnableJavaScript = dangerousEnableJavaScript;
     }
 }
