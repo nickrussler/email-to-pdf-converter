@@ -185,7 +185,11 @@ public final class ChromeRenderer implements PdfRenderer {
     }
 
     private String resolveExecutable() {
-        String configured = options.getExecutable();
+        return resolveExecutable(options.getExecutable());
+    }
+
+    static String resolveExecutable(String configuredExecutable) {
+        String configured = configuredExecutable;
         if (configured != null && !configured.trim().isEmpty()) {
             return requireExecutable(configured.trim());
         }
@@ -199,7 +203,7 @@ public final class ChromeRenderer implements PdfRenderer {
         }
 
         List<String> candidates = new ArrayList<>(Arrays.asList(
-                "google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/Applications/Chromium.app/Contents/MacOS/Chromium", "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"));
+                "google-chrome", "google-chrome-stable", "chromium", "chromium-browser", "microsoft-edge", "microsoft-edge-stable", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/Applications/Chromium.app/Contents/MacOS/Chromium", "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"));
         addWindowsCandidates(candidates);
 
         for (String candidate : candidates) {
