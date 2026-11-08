@@ -27,10 +27,13 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -47,6 +50,16 @@ public class MainWindow {
     private JLabel lblConvertingEmail;
     private JProgressBar progressBar;
     private JButton btnStartConversion;
+    private JComboBox<String> rendererComboBox;
+    private JTextField executableField;
+    private JComboBox<String> browserDownloadComboBox;
+    private JTextField browserCacheField;
+    private JButton browserCacheBrowseButton;
+    private JLabel executableHint;
+    private JLabel browserOptionsHint;
+    private JCheckBox chckbxUseProxy;
+    private JRadioButton rdbtnAutomaticProxySelection;
+    private JRadioButton rdbtnManual;
 
     /**
      * Launch the application.
@@ -88,7 +101,7 @@ public class MainWindow {
         frmEmailToPdf.setTitle("Email to PDF Converter");
         frmEmailToPdf.getContentPane().setBackground(Color.WHITE);
         frmEmailToPdf.setBackground(Color.WHITE);
-        frmEmailToPdf.setBounds(100, 100, 700, 703);
+        frmEmailToPdf.setBounds(100, 100, 700, 850);
         frmEmailToPdf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frmEmailToPdf.getContentPane().setLayout(null);
         frmEmailToPdf.setLocationRelativeTo(null);
@@ -190,7 +203,7 @@ public class MainWindow {
         JPanel panel = new JPanel();
         panel.setBorder(new TitledBorder(null, "Options", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         panel.setBackground(Color.WHITE);
-        panel.setBounds(10, 232, 664, 100);
+        panel.setBounds(10, 232, 664, 248);
         frmEmailToPdf.getContentPane().add(panel);
         panel.setLayout(null);
 
@@ -200,36 +213,99 @@ public class MainWindow {
         chckbxAddEmailHeaders.setBounds(10, 17, 632, 23);
         panel.add(chckbxAddEmailHeaders);
 
-        final JRadioButton rdbtnAutomaticProxySelection = new JRadioButton("Automatic Proxy Selection");
-        rdbtnAutomaticProxySelection.setSelected(true);
-        rdbtnAutomaticProxySelection.setEnabled(false);
-        rdbtnAutomaticProxySelection.setBackground(Color.WHITE);
-        rdbtnAutomaticProxySelection.setBounds(98, 43, 180, 23);
-        panel.add(rdbtnAutomaticProxySelection);
+        JLabel lblRenderer = new JLabel("Renderer:");
+        lblRenderer.setBounds(10, 47, 70, 20);
+        panel.add(lblRenderer);
 
-        textField = new JTextField();
-        textField.setEnabled(false);
-        textField.setBounds(352, 44, 290, 20);
-        panel.add(textField);
-        textField.setColumns(10);
+        rendererComboBox = new JComboBox<String>(new String[]{"Chrome", "wkhtmltopdf"});
+        rendererComboBox.setName("rendererComboBox");
+        rendererComboBox.setSelectedItem("Chrome");
+        rendererComboBox.setBackground(Color.WHITE);
+        rendererComboBox.setBounds(80, 44, 120, 26);
+        rendererComboBox.setToolTipText("Choose the HTML-to-PDF renderer. Chrome is the default.");
+        panel.add(rendererComboBox);
 
-        final JRadioButton rdbtnManual = new JRadioButton("Manual");
-        rdbtnManual.addChangeListener(new ChangeListener() {
+        JLabel lblExecutable = new JLabel("Executable:");
+        lblExecutable.setBounds(220, 47, 75, 20);
+        panel.add(lblExecutable);
+
+        executableField = new JTextField();
+        executableField.setName("executableField");
+        executableField.setBounds(298, 44, 240, 26);
+        executableField.setToolTipText("Optional renderer executable path. Leave blank for automatic selection.");
+        panel.add(executableField);
+
+        JButton btnBrowseExecutable = new JButton("Browse");
+        btnBrowseExecutable.setBounds(545, 42, 100, 30);
+        btnBrowseExecutable.addActionListener(new ActionListener() {
             @Override
-            public void stateChanged(ChangeEvent e) {
-                textField.setEnabled(rdbtnManual.isSelected());
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser executableChooser = new JFileChooser();
+                executableChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                executableChooser.setDialogTitle("Select renderer executable");
+                if (executableChooser.showOpenDialog(frmEmailToPdf) == JFileChooser.APPROVE_OPTION) {
+                    executableField.setText(executableChooser.getSelectedFile().getAbsolutePath());
+                }
             }
         });
-        rdbtnManual.setEnabled(false);
-        rdbtnManual.setBackground(Color.WHITE);
-        rdbtnManual.setBounds(280, 43, 66, 23);
-        panel.add(rdbtnManual);
+        panel.add(btnBrowseExecutable);
 
-        ButtonGroup bg = new ButtonGroup();
-        bg.add(rdbtnManual);
-        bg.add(rdbtnAutomaticProxySelection);
+        executableHint = new JLabel("Automatic when blank");
+        executableHint.setFont(new Font("Tahoma", Font.PLAIN, 11));
+        executableHint.setForeground(Color.GRAY);
+        executableHint.setBounds(298, 71, 240, 18);
+        panel.add(executableHint);
 
-        final JCheckBox chckbxUseProxy = new JCheckBox("Use Proxy");
+        JPanel browserPanel = new JPanel();
+        browserPanel.setBorder(new TitledBorder(null, "Chrome Browser", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        browserPanel.setBackground(Color.WHITE);
+        browserPanel.setBounds(10, 92, 644, 90);
+        browserPanel.setLayout(null);
+        panel.add(browserPanel);
+
+        JLabel lblBrowserDownload = new JLabel("Download mode:");
+        lblBrowserDownload.setBounds(10, 18, 100, 20);
+        browserPanel.add(lblBrowserDownload);
+
+        browserDownloadComboBox = new JComboBox<String>(new String[]{"Auto", "Never", "Once", "Latest", "Force"});
+        browserDownloadComboBox.setName("browserDownloadComboBox");
+        browserDownloadComboBox.setSelectedItem("Auto");
+        browserDownloadComboBox.setBackground(Color.WHITE);
+        browserDownloadComboBox.setBounds(112, 15, 120, 26);
+        browserPanel.add(browserDownloadComboBox);
+
+        JLabel lblBrowserCache = new JLabel("Cache directory:");
+        lblBrowserCache.setBounds(240, 18, 100, 20);
+        browserPanel.add(lblBrowserCache);
+
+        browserCacheField = new JTextField();
+        browserCacheField.setName("browserCacheField");
+        browserCacheField.setBounds(344, 15, 205, 26);
+        browserCacheField.setToolTipText("Browser cache directory. Leave blank for the backend default.");
+        browserPanel.add(browserCacheField);
+
+        browserCacheBrowseButton = new JButton("Browse");
+        browserCacheBrowseButton.setBounds(556, 13, 80, 30);
+        browserCacheBrowseButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser cacheChooser = new JFileChooser();
+                cacheChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                cacheChooser.setDialogTitle("Select browser cache directory");
+                if (cacheChooser.showOpenDialog(frmEmailToPdf) == JFileChooser.APPROVE_OPTION) {
+                    browserCacheField.setText(cacheChooser.getSelectedFile().getAbsolutePath());
+                }
+            }
+        });
+        browserPanel.add(browserCacheBrowseButton);
+
+        browserOptionsHint = new JLabel("Browser acquisition and caching happen automatically during conversion.");
+        browserOptionsHint.setFont(new Font("Tahoma", Font.PLAIN, 11));
+        browserOptionsHint.setForeground(Color.GRAY);
+        browserOptionsHint.setBounds(10, 49, 624, 18);
+        browserPanel.add(browserOptionsHint);
+
+        chckbxUseProxy = new JCheckBox("Use Proxy");
         chckbxUseProxy.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
@@ -242,23 +318,83 @@ public class MainWindow {
             }
         });
         chckbxUseProxy.setBackground(Color.WHITE);
-        chckbxUseProxy.setBounds(10, 43, 86, 23);
+        chckbxUseProxy.setBounds(10, 191, 86, 23);
         panel.add(chckbxUseProxy);
+
+        rdbtnAutomaticProxySelection = new JRadioButton("Automatic Proxy Selection");
+        rdbtnAutomaticProxySelection.setSelected(true);
+        rdbtnAutomaticProxySelection.setEnabled(false);
+        rdbtnAutomaticProxySelection.setBackground(Color.WHITE);
+        rdbtnAutomaticProxySelection.setBounds(98, 191, 180, 23);
+        panel.add(rdbtnAutomaticProxySelection);
+
+        textField = new JTextField();
+        textField.setEnabled(false);
+        textField.setBounds(352, 192, 290, 22);
+        panel.add(textField);
+        textField.setColumns(10);
+
+        rdbtnManual = new JRadioButton("Manual");
+        rdbtnManual.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                textField.setEnabled(rdbtnManual.isSelected());
+            }
+        });
+        rdbtnManual.setEnabled(false);
+        rdbtnManual.setBackground(Color.WHITE);
+        rdbtnManual.setBounds(280, 191, 66, 23);
+        panel.add(rdbtnManual);
+
+        ButtonGroup bg = new ButtonGroup();
+        bg.add(rdbtnManual);
+        bg.add(rdbtnAutomaticProxySelection);
 
         final JCheckBox chckbxExtractAttachments = new JCheckBox("Extract Attachments");
         chckbxExtractAttachments.setBackground(Color.WHITE);
-        chckbxExtractAttachments.setBounds(10, 69, 150, 23);
+        chckbxExtractAttachments.setBounds(10, 218, 150, 23);
         panel.add(chckbxExtractAttachments);
 
         final JCheckBox chckbxAddAttachmentNames = new JCheckBox("Add Attachment Names");
         chckbxAddAttachmentNames.setBackground(Color.WHITE);
-        chckbxAddAttachmentNames.setBounds(160, 69, 180, 23);
+        chckbxAddAttachmentNames.setBounds(160, 218, 180, 23);
         panel.add(chckbxAddAttachmentNames);
+
+        rendererComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                executableField.setText("");
+                updateRendererOptions();
+            }
+        });
+        executableField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateRendererOptions();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateRendererOptions();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateRendererOptions();
+            }
+        });
+        browserDownloadComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateRendererOptions();
+            }
+        });
+        updateRendererOptions();
 
         JPanel panelProgress = new JPanel();
         panelProgress.setBorder(new TitledBorder(null, "", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         panelProgress.setBackground(Color.WHITE);
-        panelProgress.setBounds(10, 343, 664, 127);
+        panelProgress.setBounds(10, 488, 664, 127);
         frmEmailToPdf.getContentPane().add(panelProgress);
         panelProgress.setLayout(null);
 
@@ -281,11 +417,15 @@ public class MainWindow {
                 }
 
                 final String proxy = proxyTmp;
+                final String renderer = selectedRenderer();
+                final String executable = executableField.getText();
+                final String browserDownload = selectedBrowserDownload();
+                final String browserCacheDir = browserCacheField.getText();
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         startConversion(
-                                Collections.list(listModel.elements()), chckbxAddEmailHeaders.isSelected(), proxy, chckbxAddAttachmentNames.isSelected(), chckbxExtractAttachments.isSelected());
+                                Collections.list(listModel.elements()), renderer, executable, browserDownload, browserCacheDir, chckbxAddEmailHeaders.isSelected(), proxy, chckbxAddAttachmentNames.isSelected(), chckbxExtractAttachments.isSelected());
                     }
                 }).start();
             }
@@ -316,7 +456,7 @@ public class MainWindow {
         frmEmailToPdf.getContentPane().add(btnRemoveSelectedFrom);
 
         JScrollPane scrollPaneLog = new JScrollPane();
-        scrollPaneLog.setBounds(10, 481, 664, 183);
+        scrollPaneLog.setBounds(10, 626, 664, 183);
         scrollPaneLog.setBorder(new TitledBorder(null, "Log", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         scrollPaneLog.setBackground(Color.WHITE);
         frmEmailToPdf.getContentPane().add(scrollPaneLog);
@@ -339,29 +479,126 @@ public class MainWindow {
         mc.setMessageLines(1000);
     }
 
+    private void updateRendererOptions() {
+        boolean chrome = isChromeSelected();
+        boolean executableOverride = !isBlank(executableField.getText());
+        boolean downloadOptionsEnabled = chrome && !executableOverride;
+
+        browserDownloadComboBox.setEnabled(downloadOptionsEnabled);
+        browserCacheField.setEnabled(downloadOptionsEnabled);
+        browserCacheBrowseButton.setEnabled(downloadOptionsEnabled);
+        executableHint.setText(chrome ? "Automatic when blank" : "Installed wkhtmltopdf when blank");
+
+        if (!chrome) {
+            browserOptionsHint.setText("Chrome-only settings; not used by wkhtmltopdf.");
+        } else if (executableOverride) {
+            browserOptionsHint.setText("Download mode and cache are ignored while an executable override is set.");
+        } else if ("Force".equals(browserDownloadComboBox.getSelectedItem())) {
+            browserOptionsHint.setText("Force downloads a fresh browser for each email.");
+        } else {
+            browserOptionsHint.setText("Browser acquisition and caching happen automatically during conversion.");
+        }
+
+        browserDownloadComboBox.setToolTipText(browserDownloadTooltip(selectedBrowserDownload()));
+        updateProxyHelp();
+    }
+
+    private void updateProxyHelp() {
+        String help;
+        if (isChromeSelected()) {
+            help = "Chrome uses this proxy for browser downloads and external email resources. Proxy authentication is unsupported.";
+        } else {
+            help = "wkhtmltopdf uses this proxy for email resource requests.";
+        }
+        chckbxUseProxy.setToolTipText(help);
+        rdbtnAutomaticProxySelection.setToolTipText(help);
+        rdbtnManual.setToolTipText(help);
+        textField.setToolTipText(help);
+    }
+
+    private boolean isChromeSelected() {
+        return rendererComboBox == null || "Chrome".equals(rendererComboBox.getSelectedItem());
+    }
+
+    private String selectedRenderer() {
+        return isChromeSelected() ? "chrome" : "wkhtmltopdf";
+    }
+
+    private String selectedBrowserDownload() {
+        Object selected = browserDownloadComboBox == null ? "Auto" : browserDownloadComboBox.getSelectedItem();
+        return String.valueOf(selected).toLowerCase(Locale.ROOT);
+    }
+
+    private static String browserDownloadTooltip(String mode) {
+        if ("never".equals(mode)) {
+            return "Use an installed browser or cached shell; never download.";
+        }
+        if ("once".equals(mode)) {
+            return "Use the managed cached shell or download it; skip installed browsers.";
+        }
+        if ("latest".equals(mode)) {
+            return "Check stable browser metadata; download only when that version is not cached.";
+        }
+        if ("force".equals(mode)) {
+            return "Download a fresh browser for each email.";
+        }
+        return "Use an installed browser, a usable cached shell, or download the stable shell.";
+    }
+
+    private static boolean isBlank(String value) {
+        return Strings.isNullOrEmpty(value) || value.trim().isEmpty();
+    }
+
+    static List<String> buildConversionArguments(
+                                                 String renderer, String executable, String browserDownload, String browserCacheDir, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
+        List<String> args = new ArrayList<String>();
+
+        if (!showHeaders) {
+            args.add("--hide-headers");
+        }
+
+        if (!Strings.isNullOrEmpty(proxy)) {
+            args.add("--proxy");
+            args.add(proxy);
+        }
+
+        if (addAttachmentNames) {
+            args.add("--add-attachment-names");
+        }
+
+        if (extractAttachments) {
+            args.add("--extract-attachments");
+        }
+
+        String rendererName = "wkhtmltopdf".equalsIgnoreCase(renderer) ? "wkhtmltopdf" : "chrome";
+        args.add("--renderer");
+        args.add(rendererName);
+
+        if (!isBlank(executable)) {
+            args.add("--renderer-executable");
+            args.add(executable);
+        } else if ("chrome".equals(rendererName)) {
+            if (!isBlank(browserDownload)) {
+                args.add("--browser-download");
+                args.add(browserDownload);
+            }
+            if (!isBlank(browserCacheDir)) {
+                args.add("--browser-cache-dir");
+                args.add(browserCacheDir);
+            }
+        }
+
+        return args;
+    }
+
     /**
      * Start converting the email files.
      */
-    private void startConversion(List<String> l, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
+    private void startConversion(
+                                 List<String> l, String renderer, String executable, String browserDownload, String browserCacheDir, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
         try {
-            ArrayList<String> argsOptions = new ArrayList<String>();
-
-            if (!showHeaders) {
-                argsOptions.add("--hide-headers");
-            }
-
-            if (!Strings.isNullOrEmpty(proxy)) {
-                argsOptions.add("--proxy");
-                argsOptions.add(proxy);
-            }
-
-            if (addAttachmentNames) {
-                argsOptions.add("--add-attachment-names");
-            }
-
-            if (extractAttachments) {
-                argsOptions.add("--extract-attachments");
-            }
+            ArrayList<String> argsOptions = new ArrayList<String>(
+                    buildConversionArguments(renderer, executable, browserDownload, browserCacheDir, showHeaders, proxy, addAttachmentNames, extractAttachments));
 
             int listSize = l.size();
             for (int i = 0; i < listSize; i++) {

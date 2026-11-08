@@ -33,14 +33,14 @@ jobs:
           --output "$package"
         echo "ee88d74834bdec650f7432c7d3ef1c981e42ae7a762a75a01f7f5da59abc18d5  $package" | sha256sum --check
         sudo apt-get update
-        sudo apt-get install --yes --no-install-recommends fontconfig fonts-dejavu-core "$package"
+        sudo apt-get install --yes --no-install-recommends fontconfig fonts-dejavu-core xvfb xauth "$package"
         wkhtmltopdf --version
     - name: Verify Chrome
       run: google-chrome --version
     - name: Formatting Check
       run: ./gradlew --no-daemon spotlessCheck
     - name: Tests
-      run: ./gradlew --no-daemon check
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" ./gradlew --no-daemon check
     - name: Chrome download e2e
       env:
         CHROME_DOWNLOAD_E2E: "1"
