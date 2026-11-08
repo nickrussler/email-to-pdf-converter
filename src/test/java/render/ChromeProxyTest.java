@@ -23,17 +23,22 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.io.Files;
-import java.io.BufferedReader;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsServer;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -41,6 +46,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -76,20 +83,29 @@ public class ChromeProxyTest {
             assertTrue("Expected iframe request through proxy: " + proxy.paths(), proxy.paths().contains("/frame.html"));
             assertTrue("Expected stylesheet request through proxy: " + proxy.paths(), proxy.paths().contains("/style.css"));
             assertTrue("Expected image request through proxy: " + proxy.paths(), proxy.paths().contains("/image.png"));
-            assertTrue("Expected HTTPS CONNECT through proxy", proxy.connectCount() > 0);
         }
     }
 
     @Test
     public void sendsHttpsResourceThroughProxyConnect() throws Exception {
-        try (LocalProxy proxy = new LocalProxy()) {
-            String html = "<html><body><p>HTTPS_CONNECT_MARKER</p><img src=\"https://remote.test/secure.png\"></body></html>";
-            File output = new File(temporaryFolder.newFolder(), "https-connect.pdf");
+        Assume.assumeFalse(System.getProperty("os.name").toLowerCase().contains("win"));
+        String chrome = System.getenv("CHROME_PATH");
+        Assume.assumeTrue("CHROME_PATH must be set for the HTTPS proxy test", chrome != null && !chrome.trim().isEmpty());
 
-            render(html, proxy.url(), output);
+        File work = temporaryFolder.newFolder();
+        HttpsServer https = startHttpsServer(work);
+        try (LocalProxy proxy = new LocalProxy(https.getAddress().getPort())) {
+            File browser = browserWithIgnoredCertificateErrors(chrome, work);
+            String html = "<html><body><iframe src=\"https://remote.test/secure.html\" style=\"width:400px;height:120px\"></iframe></body></html>";
+            File output = new File(work, "https-connect.pdf");
 
-            assertThat(pdfText(output), containsString("HTTPS_CONNECT_MARKER"));
+            render(html, options(browser.getAbsolutePath(), proxy.url()), output);
+
+            assertThat(pdfText(output), containsString("REMOTE_HTTPS_MARKER"));
             assertTrue("Expected HTTPS CONNECT through proxy", proxy.connectCount() > 0);
+            assertTrue("Expected CONNECT target remote.test:443: " + proxy.connectTargets(), proxy.connectTargets().contains("remote.test:443"));
+        } finally {
+            https.stop(0);
         }
     }
 
@@ -170,6 +186,71 @@ public class ChromeProxyTest {
         return browser;
     }
 
+    private HttpsServer startHttpsServer(File work) throws Exception {
+        File keystore = new File(work, "test.p12");
+        generateKeystore(keystore);
+        char[] password = "changeit".toCharArray();
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        try (InputStream input = Files.asByteSource(keystore).openStream()) {
+            keyStore.load(input, password);
+        }
+        KeyManagerFactory keyManagers = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyManagers.init(keyStore, password);
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(keyManagers.getKeyManagers(), null, null);
+
+        HttpsServer server = HttpsServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
+        server.setHttpsConfigurator(new HttpsConfigurator(sslContext));
+        server.createContext("/secure.html", new HttpHandler() {
+            @Override
+            public void handle(HttpExchange exchange) throws IOException {
+                byte[] body = "<html><body><p>REMOTE_HTTPS_MARKER</p></body></html>".getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
+                exchange.getResponseHeaders().set("Connection", "close");
+                exchange.sendResponseHeaders(200, body.length);
+                try (OutputStream output = exchange.getResponseBody()) {
+                    output.write(body);
+                }
+            }
+        });
+        server.start();
+        return server;
+    }
+
+    private static void generateKeystore(File keystore) throws Exception {
+        File keytool = new File(System.getProperty("java.home"), "bin/keytool");
+        String command = keytool.isFile() ? keytool.getAbsolutePath() : "keytool";
+        Process process = new ProcessBuilder(
+                command, "-genkeypair", "-alias", "test", "-keyalg", "RSA", "-keysize", "2048", "-validity", "2", "-dname", "CN=remote.test", "-storetype", "PKCS12", "-keystore", keystore.getAbsolutePath(), "-storepass", "changeit", "-keypass", "changeit", "-noprompt").redirectErrorStream(true).start();
+        String output = new String(readAll(process.getInputStream()), StandardCharsets.UTF_8);
+        int exit = process.waitFor();
+        if (exit != 0) {
+            throw new IOException("keytool failed with exit " + exit + ": " + output);
+        }
+    }
+
+    private File browserWithIgnoredCertificateErrors(String chrome, File work) throws Exception {
+        File browser = new File(work, "chrome-with-ignore-cert");
+        String script = "#!/bin/sh\nexec " + shellQuote(chrome) + " --ignore-certificate-errors \"$@\"\n";
+        Files.asCharSink(browser, StandardCharsets.UTF_8).write(script);
+        assertTrue(browser.setExecutable(true));
+        return browser;
+    }
+
+    private static String shellQuote(String value) {
+        return "'" + value.replace("'", "'\\''") + "'";
+    }
+
+    private static byte[] readAll(InputStream input) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        byte[] buffer = new byte[4096];
+        int read;
+        while ((read = input.read(buffer)) != -1) {
+            output.write(buffer, 0, read);
+        }
+        return output.toByteArray();
+    }
+
     private static String pdfText(File pdf) throws IOException {
         try (PDDocument document = Loader.loadPDF(pdf)) {
             return new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
@@ -181,9 +262,17 @@ public class ChromeProxyTest {
         private final ExecutorService executor = Executors.newCachedThreadPool();
         private final Thread acceptThread;
         private final List<String> paths = Collections.synchronizedList(new ArrayList<String>());
+        private final List<String> connectTargets = Collections.synchronizedList(new ArrayList<String>());
+        private final List<Socket> sockets = Collections.synchronizedList(new ArrayList<Socket>());
         private final AtomicInteger connectCount = new AtomicInteger();
+        private final Integer tunnelPort;
 
         private LocalProxy() throws IOException {
+            this(null);
+        }
+
+        private LocalProxy(Integer tunnelPort) throws IOException {
+            this.tunnelPort = tunnelPort;
             server = new ServerSocket(0, 50, InetAddress.getLoopbackAddress());
             acceptThread = new Thread(new Runnable() {
                 @Override
@@ -205,6 +294,12 @@ public class ChromeProxyTest {
             }
         }
 
+        private List<String> connectTargets() {
+            synchronized (connectTargets) {
+                return new ArrayList<>(connectTargets);
+            }
+        }
+
         private int connectCount() {
             return connectCount.get();
         }
@@ -213,6 +308,7 @@ public class ChromeProxyTest {
             while (!server.isClosed()) {
                 try {
                     final Socket socket = server.accept();
+                    sockets.add(socket);
                     executor.submit(new Runnable() {
                         @Override
                         public void run() {
@@ -228,8 +324,8 @@ public class ChromeProxyTest {
         private void handle(Socket socket) {
             try (Socket connection = socket) {
                 connection.setSoTimeout(5000);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.ISO_8859_1));
-                String requestLine = reader.readLine();
+                InputStream input = connection.getInputStream();
+                String requestLine = readLine(input);
                 if (requestLine == null) {
                     return;
                 }
@@ -238,7 +334,7 @@ public class ChromeProxyTest {
                     return;
                 }
                 while (true) {
-                    String header = reader.readLine();
+                    String header = readLine(input);
                     if (header == null || header.isEmpty()) {
                         break;
                     }
@@ -246,7 +342,12 @@ public class ChromeProxyTest {
 
                 if ("CONNECT".equals(parts[0])) {
                     connectCount.incrementAndGet();
-                    write(connection.getOutputStream(), "HTTP/1.1 200 Connection established\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1));
+                    connectTargets.add(parts[1]);
+                    if (tunnelPort == null) {
+                        write(connection.getOutputStream(), "HTTP/1.1 200 Connection established\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1));
+                        return;
+                    }
+                    tunnel(connection, input, tunnelPort);
                     return;
                 }
 
@@ -273,6 +374,58 @@ public class ChromeProxyTest {
                 write(output, body);
             } catch (IOException ignored) {
                 // best effort test proxy
+            } finally {
+                sockets.remove(socket);
+            }
+        }
+
+        private static void tunnel(Socket client, InputStream clientInput, int port) throws IOException {
+            try (Socket upstream = new Socket(InetAddress.getLoopbackAddress(), port)) {
+                write(client.getOutputStream(), "HTTP/1.1 200 Connection established\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1));
+                Thread upload = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            copy(clientInput, upstream.getOutputStream());
+                        } catch (IOException ignored) {
+                            // client closed
+                        }
+                    }
+                });
+                upload.setDaemon(true);
+                upload.start();
+                copy(upstream.getInputStream(), client.getOutputStream());
+                try {
+                    upload.join(5000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+
+        private static String readLine(InputStream input) throws IOException {
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            int value;
+            while ((value = input.read()) != -1) {
+                if (value == '\n') {
+                    break;
+                }
+                if (value != '\r') {
+                    output.write(value);
+                }
+            }
+            if (value == -1 && output.size() == 0) {
+                return null;
+            }
+            return new String(output.toByteArray(), StandardCharsets.ISO_8859_1);
+        }
+
+        private static void copy(InputStream input, OutputStream output) throws IOException {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+                output.flush();
             }
         }
 
@@ -284,6 +437,15 @@ public class ChromeProxyTest {
         @Override
         public void close() throws Exception {
             server.close();
+            synchronized (sockets) {
+                for (Socket socket : sockets) {
+                    try {
+                        socket.close();
+                    } catch (IOException ignored) {
+                        // best effort test cleanup
+                    }
+                }
+            }
             executor.shutdownNow();
         }
     }
