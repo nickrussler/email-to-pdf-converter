@@ -104,6 +104,11 @@ public final class ChromeRenderer implements PdfRenderer {
             if (noSandbox()) {
                 command.add(1, "--no-sandbox");
             }
+            if (!options.isJavaScriptEnabled()) {
+                // Emulation.setScriptExecutionDisabled only affects the attached page target.
+                // This browser-wide setting also covers out-of-process iframes.
+                command.add("--blink-settings=scriptEnabled=false");
+            }
 
             ProcessBuilder builder = new ProcessBuilder(command);
             builder.redirectErrorStream(true);
@@ -262,7 +267,8 @@ public final class ChromeRenderer implements PdfRenderer {
         Exception lastError = null;
         while (System.currentTimeMillis() < deadline) {
             if (!browser.isAlive()) {
-                throw new IOException("Chrome exited before DevTools was ready (executable=" + executable + ", log=" + browserLog + ")");
+                throw new IOException(withBrowserLog(
+                        "Chrome exited before DevTools was ready (executable=" + executable + ", log=" + browserLog + ")", browserLog));
             }
             try {
                 URL url = new URL("http://127.0.0.1:" + port + "/json/list");
@@ -283,7 +289,22 @@ public final class ChromeRenderer implements PdfRenderer {
             }
             Thread.sleep(100);
         }
-        throw new IOException("Timed out waiting for Chrome DevTools page target", lastError);
+        throw new IOException(withBrowserLog("Timed out waiting for Chrome DevTools page target", browserLog), lastError);
+    }
+
+    private static String withBrowserLog(String message, File browserLog) {
+        String logTail = readLogTail(browserLog, 4096);
+        return logTail.isEmpty() ? message : message + "\n" + logTail;
+    }
+
+    private static String readLogTail(File browserLog, int maxBytes) {
+        try {
+            byte[] bytes = Files.readAllBytes(browserLog.toPath());
+            int offset = Math.max(0, bytes.length - maxBytes);
+            return new String(bytes, offset, bytes.length - offset, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            return "";
+        }
     }
 
     private static String readString(InputStream input) throws IOException {
