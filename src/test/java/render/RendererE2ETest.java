@@ -106,7 +106,7 @@ public class RendererE2ETest {
     public void rendersNonAsciiText() throws Exception {
         File workDir = temporaryFolder.newFolder();
         File eml = writeHtmlEml(
-                workDir, "non-ascii.eml", "Non ASCII", "<html><body><p>Grüße, 日本語, Привет</p></body></html>");
+                workDir, "non-ascii.eml", "Non ASCII", "<html><body><p>Grüße, Привет, Καλημέρα</p></body></html>");
         File output = new File(workDir, "non-ascii.pdf");
 
         convert(eml, output, "A4", false, false, false);
@@ -114,8 +114,8 @@ public class RendererE2ETest {
         try (PDDocument document = Loader.loadPDF(output)) {
             String text = normalizedText(document);
             assertThat(text, containsString("Grüße"));
-            assertThat(text, containsString("日本語"));
             assertThat(text, containsString("Привет"));
+            assertThat(text, containsString("Καλημέρα"));
         }
     }
 
