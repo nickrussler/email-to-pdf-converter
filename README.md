@@ -66,7 +66,7 @@ Usage: EmailToPDFConverter [options] <email-file>
     --renderer-executable
       Path to the wkhtmltopdf or Chrome/Chromium executable.
     --browser-download
-      Chrome browser source: auto, never, once, latest (default auto).
+      Chrome browser source: auto, never, once, latest, force (default auto).
       Default: auto
     --browser-cache-dir
       Directory for an automatically downloaded Chrome headless shell.
@@ -96,6 +96,7 @@ With `--renderer chrome`, browser selection works as follows:
 * `never` uses an installed browser or cached shell and never downloads.
 * `once` uses the managed headless shell, downloading it only when no cached copy exists.
 * `latest` uses the managed headless shell and checks for a newer Stable version, downloading it when necessary. It checks the metadata endpoint on each conversion.
+* `force` downloads the current Stable headless shell even when that version is already cached and replaces the cached copy after successful extraction.
 
 Downloaded shells are cached per version and platform. Use `--browser-cache-dir` to change the cache location. `auto`, `never`, and `once` can reuse a cached shell without a metadata request.
 

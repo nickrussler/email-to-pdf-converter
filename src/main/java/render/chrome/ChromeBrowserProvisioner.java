@@ -26,9 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.URI;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -50,6 +47,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import render.RenderOptions;
 import util.Logger;
+import util.ProxyUrl;
 
 /**
  * Finds or downloads the browser used by {@link ChromeRenderer}.
@@ -114,7 +112,11 @@ final class ChromeBrowserProvisioner {
         if (mode == RenderOptions.BrowserDownload.LATEST) {
             Metadata metadata = fetchMetadata();
             Browser cached = findCachedBrowser(metadata.version);
-            return cached != null ? cached : provision(metadata);
+            return cached != null ? cached : provision(metadata, false);
+        }
+
+        if (mode == RenderOptions.BrowserDownload.FORCE) {
+            return provision(fetchMetadata(), true);
         }
 
         throw new IllegalArgumentException("Unsupported browser download mode: " + mode);
@@ -130,10 +132,15 @@ final class ChromeBrowserProvisioner {
         }
     }
 
-    private Browser provision(Metadata metadata) throws Exception {
+    private Browser provision(Metadata metadata, boolean force) throws Exception {
         try (CacheLock ignored = lock()) {
-            Browser cached = findCachedBrowser(metadata.version);
-            return cached != null ? cached : download(metadata);
+            if (!force) {
+                Browser cached = findCachedBrowser(metadata.version);
+                if (cached != null) {
+                    return cached;
+                }
+            }
+            return download(metadata);
         }
     }
 
@@ -206,7 +213,7 @@ final class ChromeBrowserProvisioner {
                 Path platformDirectory = versionDirectory.resolve(platform.key);
                 Path executable = platformDirectory.resolve(platform.executableRelativePath());
                 Path marker = platformDirectory.resolve(COMPLETE_MARKER);
-                if (Files.isRegularFile(marker) && Files.isRegularFile(executable)) {
+                if (Files.isRegularFile(marker) && isUsableCachedExecutable(executable, platform)) {
                     cached.add(Browser.cached(executable.toAbsolutePath().toString(), version));
                 }
             });
@@ -222,6 +229,20 @@ final class ChromeBrowserProvisioner {
             }
         });
         return cached.get(0);
+    }
+
+    private static boolean isUsableCachedExecutable(Path executable, Platform platform) {
+        if (!Files.isRegularFile(executable)) {
+            return false;
+        }
+        try {
+            if (Files.size(executable) == 0) {
+                return false;
+            }
+        } catch (IOException e) {
+            return false;
+        }
+        return platform.isWindows() || Files.isExecutable(executable);
     }
 
     private Metadata fetchMetadata() throws IOException {
@@ -289,7 +310,7 @@ final class ChromeBrowserProvisioner {
     }
 
     private HttpURLConnection openConnection(String value) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(value).openConnection(parseProxy(options.getProxy()));
+        HttpURLConnection connection = (HttpURLConnection) new URL(value).openConnection(ProxyUrl.parse(options.getProxy()));
         connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
         connection.setReadTimeout(READ_TIMEOUT_MS);
         connection.setInstanceFollowRedirects(true);
@@ -406,27 +427,6 @@ final class ChromeBrowserProvisioner {
         int read;
         while ((read = input.read(buffer)) != -1) {
             output.write(buffer, 0, read);
-        }
-    }
-
-    static Proxy parseProxy(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return Proxy.NO_PROXY;
-        }
-        try {
-            String normalized = value.contains("://") ? value.trim() : "http://" + value.trim();
-            URI uri = URI.create(normalized);
-            if (uri.getHost() == null) {
-                throw new IllegalArgumentException("missing host");
-            }
-            int port = uri.getPort();
-            if (port < 0) {
-                port = "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
-            }
-            Proxy.Type type = uri.getScheme() != null && uri.getScheme().toLowerCase(Locale.ROOT).startsWith("socks") ? Proxy.Type.SOCKS : Proxy.Type.HTTP;
-            return new Proxy(type, new InetSocketAddress(uri.getHost(), port));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid proxy for Chrome browser download: " + value, e);
         }
     }
 

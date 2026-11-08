@@ -22,13 +22,13 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import gui.MainWindow;
 import java.io.File;
-import java.net.InetSocketAddress;
 import java.net.Proxy;
 import mimeparser.MimeMessageConverter;
 import render.RenderOptions;
 import util.HttpUtils;
 import util.LogLevel;
 import util.Logger;
+import util.ProxyUrl;
 
 /**
  * Commandline tool to convert an email (eml, msg) to html and pdf.
@@ -98,14 +98,11 @@ public class Main {
         if ("auto".equalsIgnoreCase(cli.getProxy())) {
             Proxy defaultProxy = HttpUtils.getDefaultProxy();
 
-            if (defaultProxy == null) {
+            proxy = ProxyUrl.format(defaultProxy);
+            if (proxy == null) {
                 Logger.error("Default proxy could not be determined, please specify it manually");
                 return;
             }
-
-            InetSocketAddress defaultProxyAddress = (InetSocketAddress) defaultProxy.address();
-            proxy = defaultProxy.type().toString() + "://" + defaultProxyAddress.toString();
-            proxy = proxy.toLowerCase();
             Logger.debug("Use default proxy %s", proxy);
         } else if (!Strings.isNullOrEmpty(cli.getProxy())) {
             proxy = cli.getProxy();
