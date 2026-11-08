@@ -76,13 +76,20 @@ public class MimeMessageConverter {
 
     // html wrapper template for text/plain messages
     private static final String HTML_WRAPPER_TEMPLATE = "<!DOCTYPE html><html><head><style>body{font-size: 0.5cm;}</style><meta charset=\"%s\"><title>title</title></head><body>%s</body></html>";
-    private static final String ADD_HEADER_IFRAME_JS_TAG_TEMPLATE = "<script id=\"header-v6a8oxpf48xfzy0rhjra\" data-uri=\"%s\" type=\"text/javascript\">%s</script>";
+    private static final String ADD_HEADER_IFRAME_HTML_TEMPLATE = "<iframe id=\"%s\" src=\"%s\" style=\"position:absolute;overflow:hidden;width:%dpx;height:%dpx;top:0;left:0;z-index:100003;border:none;padding:0;margin:0\"></iframe>";
+    private static final String HEADER_PADDING_TEMPLATE = "<style>html{padding-top:%dpx !important;}</style>";
+    private static final String HEADER_FRAME_ID = "header-frame-6jk3h6a234g2a3";
+    private static final int HEADER_FRAME_WIDTH = 1000;
+    private static final int HEADER_MIN_HEIGHT = 150;
+    private static final int HEADER_PROBE_PAGE_HEIGHT = 5000;
     private static final String HEADER_FIELD_TEMPLATE = "<tr><td class=\"header-name\">%s</td><td class=\"header-value\">%s</td></tr>";
     private static final String ATTACHMENT_LIST_TEMPLATE = "<hr>%s<ul>%s</ul>";
     private static final String ATTACHMENT_ITEM_TEMPLATE = "<li>%s</li>";
 
     private static final Pattern HTML_META_CHARSET_REGEX = Pattern.compile(
             "(<meta(?!\\s*(?:name|value)\\s*=)[^>]*?charset\\s*=[\\s\"']*)([^\\s\"'/>]*)", Pattern.DOTALL);
+
+    private static final Pattern HTML_BODY_OPEN_REGEX = Pattern.compile("(?i)<body\\b(?:[^>\"']|\"[^\"]*\"|'[^']*')*>");
 
     private static final Pattern IMG_CID_REGEX = Pattern.compile("cid:(.*?)[\"']", Pattern.DOTALL);
     private static final Pattern IMG_CID_PLAIN_REGEX = Pattern.compile("\\[cid:(.*?)\\]", Pattern.DOTALL);
@@ -97,7 +104,7 @@ public class MimeMessageConverter {
      *
      * @param command list of the command and its parameters
      */
-    private static void execCommand(List<String> command) {
+    private static int execCommand(List<String> command) {
         try {
             ProcessBuilder pb = new ProcessBuilder(command);
 
@@ -106,10 +113,57 @@ public class MimeMessageConverter {
             }
 
             Process p = pb.start();
-            p.waitFor();
+            return p.waitFor();
         } catch (Exception e) {
             e.printStackTrace();
+            return -1;
         }
+    }
+
+    /**
+     * Measure the generated header with a JavaScript-free wkhtmltopdf probe PDF.
+     */
+    private static int measureHeaderHeight(String headerHtml) {
+        File tmpHeader = null;
+        File tmpProbe = null;
+        try {
+            tmpHeader = File.createTempFile("emailtopdf-header", ".html");
+            Files.asCharSink(tmpHeader, StandardCharsets.UTF_8).write(headerHtml);
+
+            tmpProbe = File.createTempFile("emailtopdf-header-probe", ".pdf");
+            List<String> cmd = new ArrayList<>(Arrays.asList(
+                    "wkhtmltopdf", "--disable-javascript", "--page-width", HEADER_FRAME_WIDTH + "px", "--page-height", HEADER_PROBE_PAGE_HEIGHT + "px", "--margin-top", "0", "--margin-bottom", "0", "--margin-left", "0", "--margin-right", "0", "--disable-smart-shrinking", "--quiet", tmpHeader.getAbsolutePath(), tmpProbe.getAbsolutePath()));
+
+            Logger.debug("Execute: %s", Joiner.on(' ').join(cmd));
+            int exitCode = execCommand(cmd);
+            if (exitCode != 0 || !tmpProbe.isFile() || tmpProbe.length() == 0) {
+                Logger.error("Could not measure the header height, using %dpx. Probe exit code: %d", HEADER_MIN_HEIGHT, exitCode);
+                return HEADER_MIN_HEIGHT;
+            }
+
+            int measuredHeight = PdfContentHeightMeasurer.measureContentHeightPx(tmpProbe, HEADER_FRAME_WIDTH);
+            return Math.max(measuredHeight, HEADER_MIN_HEIGHT);
+        } catch (Exception e) {
+            Logger.error("Could not measure the header height, using %dpx. Error: %s", HEADER_MIN_HEIGHT, e);
+            return HEADER_MIN_HEIGHT;
+        } finally {
+            deleteTempFile(tmpHeader);
+            deleteTempFile(tmpProbe);
+        }
+    }
+
+    private static void deleteTempFile(File file) {
+        if (file != null && !file.delete()) {
+            file.deleteOnExit();
+        }
+    }
+
+    private static String insertHeaderIframe(String htmlBody, String iframeHtml) {
+        Matcher matcher = HTML_BODY_OPEN_REGEX.matcher(htmlBody);
+        if (matcher.find()) {
+            return htmlBody.substring(0, matcher.end()) + iframeHtml + htmlBody.substring(matcher.end());
+        }
+        return iframeHtml + htmlBody;
     }
 
     /**
@@ -304,12 +358,14 @@ public class MimeMessageConverter {
                         HEADER_FIELD_TEMPLATE, "Date", HtmlEscapers.htmlEscaper().escape(sentDateStr));
             }
 
-            String headerDataUri = "data:text/html;charset=utf-8;base64," + BaseEncoding.base64().encode(String.format(tmpHtmlHeaderStr, headers).getBytes(StandardCharsets.UTF_8));
+            String headerHtml = String.format(tmpHtmlHeaderStr, headers);
+            String headerDataUri = "data:text/html;charset=utf-8;base64," + BaseEncoding.base64().encode(headerHtml.getBytes(StandardCharsets.UTF_8));
+            int headerHeight = measureHeaderHeight(headerHtml);
 
-            // Append this script tag dirty to the bottom
-            URL contentScriptResource = MimeMessageConverter.class.getClassLoader().getResource("contentScript.js");
-            htmlBody += String.format(
-                    ADD_HEADER_IFRAME_JS_TAG_TEMPLATE, headerDataUri, Resources.toString(contentScriptResource, StandardCharsets.UTF_8));
+            String iframeHtml = String.format(
+                    ADD_HEADER_IFRAME_HTML_TEMPLATE, HEADER_FRAME_ID, headerDataUri, HEADER_FRAME_WIDTH, headerHeight);
+            htmlBody = insertHeaderIframe(htmlBody, iframeHtml);
+            htmlBody += String.format(HEADER_PADDING_TEMPLATE, headerHeight);
         }
 
         // Append attachment filename list to body
@@ -334,7 +390,7 @@ public class MimeMessageConverter {
         List<String> cmd = new ArrayList<>(Arrays.asList(
                 "wkhtmltopdf", "--viewport-size", VIEWPORT_SIZE,
                 // "--disable-smart-shrinking",
-                "--image-quality", String.valueOf(IMAGE_QUALITY), "--encoding", charsetName));
+                "--image-quality", String.valueOf(IMAGE_QUALITY), "--encoding", charsetName, "--disable-javascript"));
         cmd.addAll(extParams);
         cmd.add(tmpHtml.getAbsolutePath());
         cmd.add(pdf.getAbsolutePath());

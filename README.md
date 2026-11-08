@@ -7,6 +7,8 @@ The conversion is done by parsing (and cleaning) the mime/structure, converting 
 
 It also handles inline images, corrupt mime headers and can use a proxy.
 
+JavaScript in email HTML is not executed during conversion; script tags are rendered inert.
+
 
 ### Prerequisites
 You need :

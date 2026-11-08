@@ -49,19 +49,6 @@ html, body {
 }
 </style>
 
-<script type="text/javascript">
-	function timer() {
-		try {
-			parent.postMessage(Math.max(document.body.offsetHeight, document.body.scrollHeight), '*');
-		} catch (r) {
-		}
-		
-		setTimeout(timer, 10);
-	};
-	
-	timer();
-</script>
-
 </head>
 <body>
   <table id="header_fields">
