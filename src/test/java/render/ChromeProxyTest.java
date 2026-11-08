@@ -23,17 +23,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.io.Files;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpsConfigurator;
-import com.sun.net.httpserver.HttpsServer;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
@@ -48,6 +43,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLSocket;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -93,8 +90,8 @@ public class ChromeProxyTest {
         Assume.assumeTrue("CHROME_PATH must be set for the HTTPS proxy test", chrome != null && !chrome.trim().isEmpty());
 
         File work = temporaryFolder.newFolder();
-        HttpsServer https = startHttpsServer(work);
-        try (LocalProxy proxy = new LocalProxy(https.getAddress().getPort())) {
+        TlsServer https = startHttpsServer(work);
+        try (LocalProxy proxy = new LocalProxy(https.port())) {
             File browser = browserWithIgnoredCertificateErrors(chrome, work);
             String html = "<html><body><iframe src=\"https://remote.test/secure.html\" style=\"width:400px;height:120px\"></iframe></body></html>";
             File output = new File(work, "https-connect.pdf");
@@ -105,7 +102,7 @@ public class ChromeProxyTest {
             assertTrue("Expected HTTPS CONNECT through proxy", proxy.connectCount() > 0);
             assertTrue("Expected CONNECT target remote.test:443: " + proxy.connectTargets(), proxy.connectTargets().contains("remote.test:443"));
         } finally {
-            https.stop(0);
+            https.close();
         }
     }
 
@@ -186,7 +183,7 @@ public class ChromeProxyTest {
         return browser;
     }
 
-    private HttpsServer startHttpsServer(File work) throws Exception {
+    private TlsServer startHttpsServer(File work) throws Exception {
         File keystore = new File(work, "test.p12");
         generateKeystore(keystore);
         char[] password = "changeit".toCharArray();
@@ -198,23 +195,7 @@ public class ChromeProxyTest {
         keyManagers.init(keyStore, password);
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(keyManagers.getKeyManagers(), null, null);
-
-        HttpsServer server = HttpsServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
-        server.setHttpsConfigurator(new HttpsConfigurator(sslContext));
-        server.createContext("/secure.html", new HttpHandler() {
-            @Override
-            public void handle(HttpExchange exchange) throws IOException {
-                byte[] body = "<html><body><p>REMOTE_HTTPS_MARKER</p></body></html>".getBytes(StandardCharsets.UTF_8);
-                exchange.getResponseHeaders().set("Content-Type", "text/html; charset=utf-8");
-                exchange.getResponseHeaders().set("Connection", "close");
-                exchange.sendResponseHeaders(200, body.length);
-                try (OutputStream output = exchange.getResponseBody()) {
-                    output.write(body);
-                }
-            }
-        });
-        server.start();
-        return server;
+        return new TlsServer((SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket(0, 50, InetAddress.getLoopbackAddress()));
     }
 
     private static void generateKeystore(File keystore) throws Exception {
@@ -254,6 +235,106 @@ public class ChromeProxyTest {
     private static String pdfText(File pdf) throws IOException {
         try (PDDocument document = Loader.loadPDF(pdf)) {
             return new PDFTextStripper().getText(document).replaceAll("\\s+", " ");
+        }
+    }
+
+    private static final class TlsServer implements AutoCloseable {
+        private final SSLServerSocket server;
+        private final ExecutorService executor = Executors.newCachedThreadPool();
+        private final List<Socket> sockets = Collections.synchronizedList(new ArrayList<Socket>());
+        private final Thread acceptThread;
+
+        private TlsServer(SSLServerSocket server) {
+            this.server = server;
+            acceptThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    acceptLoop();
+                }
+            });
+            acceptThread.setDaemon(true);
+            acceptThread.start();
+        }
+
+        private int port() {
+            return server.getLocalPort();
+        }
+
+        private void acceptLoop() {
+            while (!server.isClosed()) {
+                try {
+                    final SSLSocket socket = (SSLSocket) server.accept();
+                    sockets.add(socket);
+                    executor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            handle(socket);
+                        }
+                    });
+                } catch (IOException e) {
+                    return;
+                }
+            }
+        }
+
+        private void handle(SSLSocket socket) {
+            try (SSLSocket connection = socket) {
+                connection.setSoTimeout(5000);
+                connection.startHandshake();
+                InputStream input = connection.getInputStream();
+                String requestLine = readLine(input);
+                if (requestLine == null) {
+                    return;
+                }
+                while (true) {
+                    String header = readLine(input);
+                    if (header == null || header.isEmpty()) {
+                        break;
+                    }
+                }
+                byte[] body = "<html><body><p>REMOTE_HTTPS_MARKER</p></body></html>".getBytes(StandardCharsets.UTF_8);
+                String headers = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: " + body.length + "\r\nConnection: close\r\n\r\n";
+                OutputStream output = connection.getOutputStream();
+                output.write(headers.getBytes(StandardCharsets.ISO_8859_1));
+                output.write(body);
+                output.flush();
+            } catch (IOException ignored) {
+                // best effort test TLS server
+            } finally {
+                sockets.remove(socket);
+            }
+        }
+
+        private static String readLine(InputStream input) throws IOException {
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            int value;
+            while ((value = input.read()) != -1) {
+                if (value == '\n') {
+                    break;
+                }
+                if (value != '\r') {
+                    output.write(value);
+                }
+            }
+            if (value == -1 && output.size() == 0) {
+                return null;
+            }
+            return new String(output.toByteArray(), StandardCharsets.ISO_8859_1);
+        }
+
+        @Override
+        public void close() throws Exception {
+            server.close();
+            synchronized (sockets) {
+                for (Socket socket : sockets) {
+                    try {
+                        socket.close();
+                    } catch (IOException ignored) {
+                        // best effort test cleanup
+                    }
+                }
+            }
+            executor.shutdownNow();
         }
     }
 
