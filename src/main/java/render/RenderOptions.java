@@ -38,6 +38,26 @@ public final class RenderOptions {
         }
     }
 
+    public enum BrowserDownload {
+        AUTO, NEVER, ONCE, LATEST;
+
+        public static BrowserDownload fromName(String name) {
+            if (name == null || name.trim().isEmpty() || "auto".equalsIgnoreCase(name.trim())) {
+                return AUTO;
+            }
+            if ("never".equalsIgnoreCase(name.trim())) {
+                return NEVER;
+            }
+            if ("once".equalsIgnoreCase(name.trim())) {
+                return ONCE;
+            }
+            if ("latest".equalsIgnoreCase(name.trim())) {
+                return LATEST;
+            }
+            throw new IllegalArgumentException("Unsupported browser download mode: " + name);
+        }
+    }
+
     private final Renderer renderer;
     private final String executable;
     private final String proxy;
@@ -45,9 +65,16 @@ public final class RenderOptions {
     private final String dpi;
     private final boolean javaScriptEnabled;
     private final List<String> extParams;
+    private final BrowserDownload browserDownload;
+    private final String browserCacheDir;
 
     public RenderOptions(
                          Renderer renderer, String executable, String proxy, String pageSize, String dpi, boolean javaScriptEnabled, List<String> extParams) {
+        this(renderer, executable, proxy, pageSize, dpi, javaScriptEnabled, extParams, BrowserDownload.AUTO, null);
+    }
+
+    public RenderOptions(
+                         Renderer renderer, String executable, String proxy, String pageSize, String dpi, boolean javaScriptEnabled, List<String> extParams, BrowserDownload browserDownload, String browserCacheDir) {
         this.renderer = renderer;
         this.executable = executable;
         this.proxy = proxy;
@@ -55,6 +82,8 @@ public final class RenderOptions {
         this.dpi = dpi;
         this.javaScriptEnabled = javaScriptEnabled;
         this.extParams = extParams == null ? Collections.emptyList() : Collections.unmodifiableList(new ArrayList<>(extParams));
+        this.browserDownload = browserDownload == null ? BrowserDownload.AUTO : browserDownload;
+        this.browserCacheDir = browserCacheDir;
     }
 
     /**
@@ -90,5 +119,13 @@ public final class RenderOptions {
 
     public List<String> getExtParams() {
         return extParams;
+    }
+
+    public BrowserDownload getBrowserDownload() {
+        return browserDownload;
+    }
+
+    public String getBrowserCacheDir() {
+        return browserCacheDir;
     }
 }
