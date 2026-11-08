@@ -23,6 +23,7 @@ import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import java.io.File;
@@ -36,6 +37,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import mimeparser.MimeMessageConverter;
+import mimeparser.PdfContentHeightMeasurer;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -330,6 +332,124 @@ public class MainTest {
         assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
         assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
         assertSinglePagePdf(tmpPdf, PDRectangle.A4, subject, from, bodyText);
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
+    public void main_emailJavaScriptNotExecuted() throws IOException {
+        File workDir = temporaryFolder.newFolder();
+        String bodyText = "BODY_MARKER_NO_JS_6f3a";
+        String scriptMarker = "JS_SCRIPT_MARKER_6f3a";
+        String onloadMarker = "JS_ONLOAD_MARKER_6f3a";
+        String body = "<html><body onload=\"document.body.appendChild(document.createTextNode(' " + onloadMarker + " '));\">" + "<p>" + bodyText + "</p>" + "<script>document.body.appendChild(document.createTextNode(' " + scriptMarker + " '));</script>" + "</body></html>";
+
+        File eml = writeHtmlEml(workDir, "js-not-executed.eml", "JavaScript disabled", "sender@example.com", body);
+        File tmpPdf = new File(workDir, "output.pdf");
+
+        runMain("-o", tmpPdf.getAbsolutePath(), "-s", "Letter", eml.getAbsolutePath());
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+        assertSinglePagePdf(tmpPdf, PDRectangle.LETTER, bodyText, "JavaScript disabled", "sender@example.com");
+        assertPdfTextDoesNotContain(tmpPdf, scriptMarker, onloadMarker);
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
+    public void main_extParamsCanReenableJavaScript() throws Exception {
+        File workDir = temporaryFolder.newFolder();
+        String bodyText = "BODY_MARKER_JS_OPT_IN_8b2c";
+        String scriptMarker = "JS_OPT_IN_MARKER_8b2c";
+        String body = "<html><body><p>" + bodyText + "</p>" + "<script>document.body.appendChild(document.createTextNode(' " + scriptMarker + " '));</script>" + "</body></html>";
+
+        File eml = writeHtmlEml(workDir, "js-opt-in.eml", "JavaScript opt in", "sender@example.com", body);
+        File tmpPdf = new File(workDir, "output.pdf");
+
+        LogLevel old = Logger.level;
+        Logger.level = LogLevel.Error;
+        try {
+            MimeMessageConverter.convertToPdf(
+                    eml.getAbsolutePath(), tmpPdf.getAbsolutePath(), false, false, false, null, Arrays.asList("--page-size", "Letter", "--dpi", "300", "--enable-javascript"));
+        } finally {
+            Logger.level = old;
+        }
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+        assertSinglePagePdf(tmpPdf, PDRectangle.LETTER, bodyText, scriptMarker);
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
+    public void main_headerProducesPaintedBackgroundOrBorder() throws IOException {
+        File workDir = temporaryFolder.newFolder();
+        String bodyText = "BODY_MARKER_HEADER_PAINT_2d7e";
+        File eml = writeHtmlEml(
+                workDir, "header-paint.eml", "Header paint", "sender@example.com", "<html><body><p>" + bodyText + "</p></body></html>");
+        File withHeadersPdf = new File(workDir, "with-headers.pdf");
+        File withoutHeadersPdf = new File(workDir, "without-headers.pdf");
+
+        runMain("-o", withHeadersPdf.getAbsolutePath(), "-s", "Letter", eml.getAbsolutePath());
+        runMain("-o", withoutHeadersPdf.getAbsolutePath(), "-s", "Letter", "-hh", eml.getAbsolutePath());
+
+        int withHeaderHeight = PdfContentHeightMeasurer.measureContentHeightPx(withHeadersPdf, 1000);
+        int withoutHeaderHeight = PdfContentHeightMeasurer.measureContentHeightPx(withoutHeadersPdf, 1000);
+
+        assertTrue("Expected the generated header to paint a border/background", withHeaderHeight > withoutHeaderHeight);
+
+        if (!withHeadersPdf.delete()) {
+            withHeadersPdf.deleteOnExit();
+        }
+        if (!withoutHeadersPdf.delete()) {
+            withoutHeadersPdf.deleteOnExit();
+        }
+    }
+
+    @Test
+    public void main_headerRendersWithQuotedBodyAttribute() throws IOException {
+        File workDir = temporaryFolder.newFolder();
+        String subject = "BODY_ATTR_SUBJECT";
+        String bodyText = "BODY_MARKER_BODY_ATTR_4e1f";
+        String body = "<html><body data-x=\"a>b\"><p>" + bodyText + "</p></body></html>";
+
+        File eml = writeHtmlEml(workDir, "body-attr.eml", subject, "sender@example.com", body);
+        File tmpPdf = new File(workDir, "output.pdf");
+
+        runMain("-o", tmpPdf.getAbsolutePath(), "-s", "Letter", eml.getAbsolutePath());
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+        assertSinglePagePdf(tmpPdf, PDRectangle.LETTER, subject, "sender@example.com", bodyText);
+
+        if (!tmpPdf.delete()) {
+            tmpPdf.deleteOnExit();
+        }
+    }
+
+    @Test
+    public void main_longHeaderValuesAreNotClipped() throws IOException {
+        File workDir = temporaryFolder.newFolder();
+        String longSubject = "LONG_HEADER_START " + Strings.repeat("abcdefghij ", 30) + "LONG_HEADER_END";
+        String bodyText = "BODY_MARKER_LONG_HEADER_9c4d";
+
+        File eml = writeHtmlEml(
+                workDir, "long-header.eml", longSubject, "sender@example.com", "<html><body><p>" + bodyText + "</p></body></html>");
+        File tmpPdf = new File(workDir, "output.pdf");
+
+        runMain("-o", tmpPdf.getAbsolutePath(), "-s", "Letter", eml.getAbsolutePath());
+
+        assertTrue("Expected a generated PDF: " + tmpPdf, tmpPdf.isFile());
+        assertTrue("Generated PDF must not be empty: " + tmpPdf, tmpPdf.length() > 0);
+        assertSinglePagePdf(tmpPdf, PDRectangle.LETTER, "LONG_HEADER_START", "LONG_HEADER_END", bodyText, "sender@example.com");
 
         if (!tmpPdf.delete()) {
             tmpPdf.deleteOnExit();
