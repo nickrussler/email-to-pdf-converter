@@ -3,7 +3,7 @@
 
 This software can be used to convert email files (eml or msg) to pdf files. It can be used as a library, command line tool or desktop application with its GUI.
 
-The conversion is done by parsing (and cleaning) the mime/structure, converting it to html and then using [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf), an installed Chrome/Chromium/Edge browser, or an automatically downloaded Chrome headless shell to convert the generated html to a pdf file.
+The conversion is done by parsing (and cleaning) the mime/structure, converting it to html and then using a Chrome/Chromium/Edge browser or [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) to convert the generated html to a pdf file. Chrome is the default renderer; if no browser is installed, a Chrome headless shell can be downloaded automatically.
 
 It also handles inline images, corrupt mime headers and can use a proxy.
 
@@ -14,13 +14,13 @@ JavaScript in email HTML is not executed during conversion; script tags are rend
 You need :
 
 * a complete jre, not a headless one (on Debian, for example, you need to have `openjdk-11-jre` installed);
-* either [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) in your $PATH (default renderer) or a browser for `--renderer chrome`: an installed Chrome/Chromium/Edge browser, or allow the converter to download a Chrome headless shell
+* a browser for the default renderer: an installed Chrome/Chromium/Edge browser, or allow the converter to download a Chrome headless shell; or [wkhtmltopdf](//github.com/wkhtmltopdf/wkhtmltopdf) in your $PATH for `--renderer wkhtmltopdf`
 
 ### Download
 You can download the lates binaries [**here**](//github.com/nickrussler/email-to-pdf-converter/releases/latest).
 
 There you can find a Windows setup.exe and a jar.<br>
-If you want to use the jar (e.g. for a non Windows OS) you need the [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH.
+If you want to use the jar (e.g. for a non Windows OS), install Chrome/Chromium/Edge or allow the converter to download a Chrome headless shell. To use the legacy renderer, put the [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH and pass `--renderer wkhtmltopdf`.
 
 ### Screenshot
 <img src="https://www.whitebyte.info/wp-content/uploads/2015/02/scr1.png" />
@@ -61,8 +61,8 @@ Usage: EmailToPDFConverter [options] <email-file>
       Set wkhtmltopdf DPI. Ignored by the Chrome renderer. (default 300)
       Default: 300
     --renderer
-      Renderer to use: wkhtmltopdf, chrome (default wkhtmltopdf)
-      Default: wkhtmltopdf
+      Renderer to use: wkhtmltopdf, chrome (default chrome)
+      Default: chrome
     --renderer-executable
       Path to the wkhtmltopdf or Chrome/Chromium executable.
     --browser-download
@@ -88,9 +88,9 @@ Usage: EmailToPDFConverter [options] <email-file>
       Print the version number.
       Default: false
   ```
-E.g. ``java -jar emailconverter-2.1.1-all.jar example.eml`` (you need [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH)
+E.g. ``java -jar emailconverter-2.1.1-all.jar example.eml`` (uses Chrome by default; install Chrome/Chromium/Edge or allow the automatic headless-shell download. For wkhtmltopdf, pass `--renderer wkhtmltopdf`.)
 
-With `--renderer chrome`, browser selection works as follows:
+With the Chrome renderer (the default), browser selection works as follows:
 
 * `auto` uses an installed Chrome/Chromium/Edge browser first, then a cached downloaded shell, and finally downloads a Chrome headless shell.
 * `never` uses an installed browser or cached shell and never downloads.

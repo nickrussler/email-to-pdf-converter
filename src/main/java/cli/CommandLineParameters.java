@@ -86,8 +86,8 @@ public class CommandLineParameters {
     private String dpi = "300";
 
     @Parameter(
-            names = {"--renderer"}, description = "Renderer to use: wkhtmltopdf, chrome (default wkhtmltopdf)")
-    private String renderer = "wkhtmltopdf";
+            names = {"--renderer"}, description = "Renderer to use: wkhtmltopdf, chrome (default chrome)")
+    private String renderer = "chrome";
 
     @Parameter(
             names = {"--renderer-executable"}, description = "Path to the wkhtmltopdf or Chrome/Chromium executable.")

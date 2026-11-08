@@ -686,8 +686,9 @@ public class MainTest {
         try (PDDocument document = Loader.loadPDF(pdf)) {
             assertEquals("Expected a single-page PDF", 1, document.getNumberOfPages());
             PDRectangle pageSize = document.getPage(0).getMediaBox();
-            assertEquals("Expected page width", expectedPageSize.getWidth(), pageSize.getWidth(), 0.5f);
-            assertEquals("Expected page height", expectedPageSize.getHeight(), pageSize.getHeight(), 0.5f);
+            // Chrome rounds printed paper dimensions, so allow a small tolerance.
+            assertEquals("Expected page width", expectedPageSize.getWidth(), pageSize.getWidth(), 1.0f);
+            assertEquals("Expected page height", expectedPageSize.getHeight(), pageSize.getHeight(), 1.0f);
 
             String text = normalizedPdfText(document);
             for (String expected : expectedText) {

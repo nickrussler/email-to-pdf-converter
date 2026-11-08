@@ -28,11 +28,11 @@ public final class RenderOptions {
         WKHTMLTOPDF, CHROME;
 
         public static Renderer fromName(String name) {
-            if (name == null || name.trim().isEmpty() || "wkhtmltopdf".equalsIgnoreCase(name.trim())) {
-                return WKHTMLTOPDF;
-            }
-            if ("chrome".equalsIgnoreCase(name.trim()) || "chromium".equalsIgnoreCase(name.trim())) {
+            if (name == null || name.trim().isEmpty() || "chrome".equalsIgnoreCase(name.trim()) || "chromium".equalsIgnoreCase(name.trim())) {
                 return CHROME;
+            }
+            if ("wkhtmltopdf".equalsIgnoreCase(name.trim())) {
+                return WKHTMLTOPDF;
             }
             throw new IllegalArgumentException("Unsupported renderer: " + name);
         }
