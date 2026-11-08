@@ -33,7 +33,7 @@ jobs:
           --output "$package"
         echo "ee88d74834bdec650f7432c7d3ef1c981e42ae7a762a75a01f7f5da59abc18d5  $package" | sha256sum --check
         sudo apt-get update
-        sudo apt-get install --yes --no-install-recommends fontconfig fonts-dejavu-core "$package"
+        sudo apt-get install --yes --no-install-recommends fontconfig fonts-dejavu-core fonts-noto-cjk "$package"
         wkhtmltopdf --version
     - name: Verify Chrome
       run: google-chrome --version
