@@ -23,8 +23,9 @@ import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
@@ -38,19 +39,28 @@ final class ChromeCdpClient extends WebSocketClient {
 
     private final AtomicLong nextId = new AtomicLong();
     private final Map<Long, CompletableFuture<JsonObject>> pending = new ConcurrentHashMap<>();
-    private volatile CountDownLatch loadLatch = new CountDownLatch(0);
+    private volatile CompletableFuture<Void> loadFuture = CompletableFuture.completedFuture(null);
 
     ChromeCdpClient(URI serverUri) {
         super(serverUri);
     }
 
-    void prepareLoadLatch() {
-        loadLatch = new CountDownLatch(1);
+    void prepareLoad() {
+        loadFuture = new CompletableFuture<>();
     }
 
-    void awaitLoad() throws IOException, InterruptedException {
-        if (!loadLatch.await(LOAD_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            throw new IOException("Timed out waiting for Chrome to finish loading the document");
+    void awaitLoad() throws IOException {
+        CompletableFuture<Void> future = loadFuture;
+        try {
+            future.get(LOAD_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            throw new IOException("Timed out waiting for Chrome to finish loading the document", e);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause() == null ? e : e.getCause();
+            throw new IOException("Chrome disconnected while loading the document: " + cause.getMessage(), cause);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while waiting for Chrome to finish loading the document", e);
         }
     }
 
@@ -94,19 +104,22 @@ final class ChromeCdpClient extends WebSocketClient {
                 future.complete(object);
             }
         } else if (object.has("method") && "Page.loadEventFired".equals(object.get("method").getAsString())) {
-            loadLatch.countDown();
+            loadFuture.complete(null);
         }
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
+        IOException error = new IOException("CDP connection closed: " + reason);
+        loadFuture.completeExceptionally(error);
         for (CompletableFuture<JsonObject> future : pending.values()) {
-            future.completeExceptionally(new IOException("CDP connection closed: " + reason));
+            future.completeExceptionally(error);
         }
     }
 
     @Override
     public void onError(Exception ex) {
+        loadFuture.completeExceptionally(ex);
         for (CompletableFuture<JsonObject> future : pending.values()) {
             future.completeExceptionally(ex);
         }

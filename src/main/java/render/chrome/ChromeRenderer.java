@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URL;
@@ -131,7 +132,7 @@ public final class ChromeRenderer implements PdfRenderer {
                 cdp.sendCommand("Emulation.setScriptExecutionDisabled", disabled);
             }
 
-            cdp.prepareLoadLatch();
+            cdp.prepareLoad();
             JsonObject frameTree = cdp.sendCommand("Page.getFrameTree");
             String frameId = frameTree.getAsJsonObject("frameTree").getAsJsonObject("frame").get("id").getAsString();
             JsonObject document = new JsonObject();
@@ -274,7 +275,7 @@ public final class ChromeRenderer implements PdfRenderer {
             }
             try {
                 URL url = new URL("http://127.0.0.1:" + port + "/json/list");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
                 connection.setConnectTimeout(500);
                 connection.setReadTimeout(1000);
                 try (InputStream input = connection.getInputStream()) {
