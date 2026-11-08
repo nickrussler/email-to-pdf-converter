@@ -45,6 +45,7 @@ import render.PaperSize;
 import render.PdfRenderer;
 import render.RenderOptions;
 import util.Logger;
+import util.ProxyUrl;
 
 /**
  * Renders HTML with an installed or downloaded Chrome browser using a minimal CDP client.
@@ -94,6 +95,7 @@ public final class ChromeRenderer implements PdfRenderer {
     }
 
     private void renderHtml(String html, File outputPdf, double widthPoints, double heightPoints, double marginMm, boolean printBackground) throws Exception {
+        String chromeProxy = ProxyUrl.normalizeForChrome(options.getProxy());
         ChromeBrowserProvisioner.Browser browserInfo = resolveBrowser();
         String executable = browserInfo.getExecutable();
         Path userDataDir = Files.createTempDirectory("emailtopdf-chrome-");
@@ -109,6 +111,9 @@ public final class ChromeRenderer implements PdfRenderer {
             }
             command.addAll(Arrays.asList(
                     "--disable-gpu", "--no-first-run", "--no-default-browser-check", "--remote-debugging-port=" + port, "--user-data-dir=" + userDataDir.toAbsolutePath(), "about:blank"));
+            if (chromeProxy != null) {
+                command.add("--proxy-server=" + chromeProxy);
+            }
             if (noSandbox()) {
                 command.add(1, "--no-sandbox");
             }
@@ -195,9 +200,6 @@ public final class ChromeRenderer implements PdfRenderer {
     }
 
     private void logUnsupportedOptions() {
-        if (options.getProxy() != null && !options.getProxy().isEmpty()) {
-            Logger.error("Chrome page rendering does not use proxy settings yet; ignoring proxy for page requests: %s", options.getProxy());
-        }
         if (options.getDpi() != null && !options.getDpi().isEmpty() && !"300".equals(options.getDpi())) {
             Logger.error("Chrome renderer ignores the DPI setting: %s", options.getDpi());
         }

@@ -22,7 +22,7 @@ import java.net.URI;
 import java.util.Locale;
 
 /**
- * Formats and parses proxy settings used by the command line and browser downloader.
+ * Formats and parses proxy settings used by the command line and browser.
  */
 public final class ProxyUrl {
     private ProxyUrl() {
@@ -54,9 +54,7 @@ public final class ProxyUrl {
             if (uri.getHost() == null) {
                 throw new IllegalArgumentException("missing host");
             }
-            if (uri.getRawUserInfo() != null && !uri.getRawUserInfo().isEmpty()) {
-                throw new IllegalArgumentException("Proxy authentication is not supported for Chrome browser downloads; remove credentials from --proxy or use an installed browser.");
-            }
+            rejectCredentials(uri);
             int port = uri.getPort();
             if (port < 0) {
                 port = "https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80;
@@ -68,6 +66,44 @@ public final class ProxyUrl {
                 throw e;
             }
             throw new IllegalArgumentException("Invalid proxy for Chrome browser download: " + value, e);
+        }
+    }
+
+    public static String normalizeForChrome(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            String normalized = value.contains("://") ? value.trim() : "http://" + value.trim();
+            URI uri = URI.create(normalized);
+            if (uri.getHost() == null) {
+                throw new IllegalArgumentException("missing host");
+            }
+            rejectCredentials(uri);
+            String scheme = uri.getScheme() == null ? "http" : uri.getScheme().toLowerCase(Locale.ROOT);
+            if ("socks".equals(scheme)) {
+                scheme = "socks5";
+            }
+            if (!"http".equals(scheme) && !"https".equals(scheme) && !"socks4".equals(scheme) && !"socks5".equals(scheme)) {
+                throw new IllegalArgumentException("unsupported proxy scheme " + scheme);
+            }
+            String host = uri.getHost();
+            if (host.indexOf(':') >= 0 && !host.startsWith("[")) {
+                host = "[" + host + "]";
+            }
+            int port = uri.getPort();
+            return scheme + "://" + host + (port >= 0 ? ":" + port : "");
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage() != null && (e.getMessage().contains("Proxy authentication") || e.getMessage().contains("unsupported proxy scheme"))) {
+                throw e;
+            }
+            throw new IllegalArgumentException("Invalid proxy for Chrome: " + value, e);
+        }
+    }
+
+    private static void rejectCredentials(URI uri) {
+        if (uri.getRawUserInfo() != null && !uri.getRawUserInfo().isEmpty()) {
+            throw new IllegalArgumentException("Proxy authentication is not supported for Chrome; remove credentials from --proxy.");
         }
     }
 }

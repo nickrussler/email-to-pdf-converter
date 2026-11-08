@@ -68,6 +68,38 @@ public class ProxyUrlTest {
     }
 
     @Test
+    public void normalizesBareHostAndPortForChrome() {
+        assertEquals("http://proxy.example.com:3128", ProxyUrl.normalizeForChrome("proxy.example.com:3128"));
+    }
+
+    @Test
+    public void preservesSupportedChromeProxySchemes() {
+        assertEquals("socks5://proxy.example.com:1080", ProxyUrl.normalizeForChrome("socks5://proxy.example.com:1080"));
+        assertEquals("socks5://proxy.example.com:1080", ProxyUrl.normalizeForChrome("socks://proxy.example.com:1080"));
+        assertEquals("https://proxy.example.com:8443", ProxyUrl.normalizeForChrome("https://proxy.example.com:8443"));
+    }
+
+    @Test
+    public void rejectsUnsupportedChromeProxySchemes() {
+        try {
+            ProxyUrl.normalizeForChrome("ftp://proxy.example.com:21");
+            fail("Expected an unsupported proxy scheme error");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), containsString("unsupported proxy scheme"));
+        }
+    }
+
+    @Test
+    public void rejectsProxyCredentialsForChrome() {
+        try {
+            ProxyUrl.normalizeForChrome("http://user:password@127.0.0.1:3128");
+            fail("Expected unsupported proxy authentication");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage(), containsString("Proxy authentication is not supported"));
+        }
+    }
+
+    @Test
     public void rejectsProxyCredentials() {
         try {
             ProxyUrl.parse("http://user:password@127.0.0.1:3128");
