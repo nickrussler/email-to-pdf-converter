@@ -68,8 +68,13 @@ public final class WkhtmltopdfRenderer implements PdfRenderer {
 
             Logger.debug("Execute: %s", Joiner.on(' ').join(cmd));
             int exitCode = execCommand(cmd);
-            if (exitCode != 0 || !outputPdf.isFile() || outputPdf.length() == 0) {
+            if (!outputPdf.isFile() || outputPdf.length() == 0) {
                 throw new IOException(String.format("wkhtmltopdf failed with exit code %d while writing %s", exitCode, outputPdf.getAbsolutePath()));
+            }
+            if (exitCode != 0) {
+                // wkhtmltopdf may report a resource-loading error after producing a usable PDF.
+                // Keep the PDF and let conversion continue, including attachment extraction.
+                Logger.error("wkhtmltopdf exited with code %d after writing %s; continuing with the generated PDF", exitCode, outputPdf.getAbsolutePath());
             }
         } finally {
             deleteTempFile(tmpHtml);
