@@ -39,10 +39,12 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import mimeparser.PdfContentHeightMeasurer;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import render.PaperSize;
 import render.PdfRenderer;
 import render.RenderOptions;
@@ -60,8 +62,6 @@ public final class ChromeRenderer implements PdfRenderer {
     private static final double CSS_PX_PER_INCH = 96.0;
     private static final double MM_PER_INCH = 25.4;
     private static final double PRINT_MARGIN_MM = 10.0;
-    private static final Pattern CSS_PAGE_RULE = Pattern.compile("(?is)(@page\\b[^{]*\\{)([^{}]*)(\\})");
-    private static final Pattern CSS_PAGE_SIZE = Pattern.compile("(?i)\\bsize\\s*:[^;}]+;?");
 
     private final RenderOptions options;
     private volatile ChromeBrowserProvisioner.Browser resolvedBrowser;
@@ -153,7 +153,7 @@ public final class ChromeRenderer implements PdfRenderer {
             String frameId = frameTree.getAsJsonObject("frameTree").getAsJsonObject("frame").get("id").getAsString();
             JsonObject document = new JsonObject();
             document.addProperty("frameId", frameId);
-            document.addProperty("html", stripCssPageSize(html));
+            document.addProperty("html", html);
             cdp.sendCommand("Page.setDocumentContent", document);
             cdp.awaitLoad();
 
@@ -173,7 +173,11 @@ public final class ChromeRenderer implements PdfRenderer {
             if (!result.has("data")) {
                 throw new IOException("Chrome returned no PDF data");
             }
-            Files.write(outputPdf.toPath(), BaseEncoding.base64().decode(result.get("data").getAsString()));
+            byte[] pdf = BaseEncoding.base64().decode(result.get("data").getAsString());
+            if (landscape) {
+                validateLandscape(pdf);
+            }
+            Files.write(outputPdf.toPath(), pdf);
         } finally {
             if (cdp != null) {
                 cdp.close();
@@ -189,15 +193,24 @@ public final class ChromeRenderer implements PdfRenderer {
         }
     }
 
-    static String stripCssPageSize(String html) {
-        Matcher rules = CSS_PAGE_RULE.matcher(html);
-        StringBuffer withoutSize = new StringBuffer();
-        while (rules.find()) {
-            String body = CSS_PAGE_SIZE.matcher(rules.group(2)).replaceAll("");
-            rules.appendReplacement(withoutSize, Matcher.quoteReplacement(rules.group(1) + body + rules.group(3)));
+    static void validateLandscape(byte[] pdf) throws IOException {
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            for (int i = 0; i < document.getNumberOfPages(); i++) {
+                PDPage page = document.getPage(i);
+                PDRectangle mediaBox = page.getMediaBox();
+                float width = mediaBox.getWidth();
+                float height = mediaBox.getHeight();
+                int rotation = page.getRotation() % 360;
+                if (rotation == 90 || rotation == 270) {
+                    float tmp = width;
+                    width = height;
+                    height = tmp;
+                }
+                if (width <= height) {
+                    throw new IOException("Landscape was requested, but Chrome rendered page " + (i + 1) + " in portrait (" + width + " x " + height + " pt). The email's print CSS can set page orientation.");
+                }
+            }
         }
-        rules.appendTail(withoutSize);
-        return withoutSize.toString();
     }
 
     private ChromeBrowserProvisioner.Browser resolveBrowser() throws Exception {
