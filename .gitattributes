@@ -1,3 +1,5 @@
 * text eol=lf
 
 *.bat text eol=crlf
+
+gradle/tools/*.exe -text

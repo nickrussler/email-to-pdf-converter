@@ -27,10 +27,7 @@ jobs:
       run: |
         $ErrorActionPreference = 'Stop'
 
-        $launch4jInstaller = Join-Path $env:RUNNER_TEMP 'launch4j.exe'
-        curl.exe --fail --location --retry 3 `
-          --output $launch4jInstaller `
-          'https://downloads.sourceforge.net/project/launch4j/launch4j-3/3.50/launch4j-3.50-win32.exe'
+        $launch4jInstaller = Join-Path $env:GITHUB_WORKSPACE 'gradle/tools/launch4j-3.50-win32.exe'
         $launch4jHash = (Get-FileHash $launch4jInstaller -Algorithm SHA256).Hash
         if ($launch4jHash -ne 'A7A1E32A295FE3D501FA623D6986FF0FEBd60d770223D699E01735666128B5F0') {
           throw "Unexpected Launch4j installer hash: $launch4jHash"
