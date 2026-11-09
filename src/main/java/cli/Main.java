@@ -131,15 +131,15 @@ public class Main {
         }
 
         String printStylesheet = null;
-        if (!Strings.isNullOrEmpty(cli.getStylesheet())) {
+        if (!Strings.isNullOrEmpty(cli.getCustomStylesheetPath())) {
             if (renderer != RenderOptions.Renderer.CHROME) {
-                Logger.error("--stylesheet is only supported by the Chrome renderer.");
+                Logger.error("--custom-stylesheet-path is only supported by the Chrome renderer.");
                 return;
             }
             try {
-                printStylesheet = stripLeadingBom(Files.asCharSource(new File(cli.getStylesheet()), StandardCharsets.UTF_8).read());
+                printStylesheet = stripLeadingBom(Files.asCharSource(new File(cli.getCustomStylesheetPath()), StandardCharsets.UTF_8).read());
             } catch (IOException e) {
-                Logger.error("Could not read stylesheet %s: %s", cli.getStylesheet(), e.getMessage());
+                Logger.error("Could not read custom stylesheet %s: %s", cli.getCustomStylesheetPath(), e.getMessage());
                 return;
             }
         }
