@@ -156,6 +156,9 @@ Creates a windows setup in `build/innosetup`. This task needs the [Launch4j](htt
  * `gradlew check` <br>
 Executes the unit tests and generates various reports (jacoco, checkstyle, findbugs, jdepend, unit test report).
 
+### Releases
+Pushing a version tag such as `4.0.0` runs the Windows release workflow. It builds `setup.exe` and the versioned jar, uploads them as workflow artifacts, and creates a draft GitHub release for review before publishing.
+
 ### Date Formatting
 Dates are formatted with the default locale. You can change it, e.g. by passing the VM argument `-Duser.language=en-US` similar to setting the timezone e.g. `-Duser.timezone="Asia/Kolkata"`.
 
