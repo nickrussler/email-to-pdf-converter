@@ -48,15 +48,6 @@ jobs:
       run: |
         mkdir -p _site
         cp build/screenshots/main-window.png _site/main-window.png
-        cat > _site/index.html <<'HTML'
-        <!doctype html>
-        <html lang="en">
-        <head><meta charset="utf-8"><title>Email to PDF Converter</title></head>
-        <body>
-        <p><img src="main-window.png" alt="Email to PDF Converter GUI"></p>
-        </body>
-        </html>
-        HTML
     - name: Configure Pages
       uses: actions/configure-pages@v5
     - name: Upload Pages artifact
