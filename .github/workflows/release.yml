@@ -1,0 +1,106 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  windows-release:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+    - name: Set up Corretto JDK 8
+      uses: actions/setup-java@v6
+      with:
+        distribution: corretto
+        java-version: '8'
+    - name: Install packaging tools
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+
+        $launch4jInstaller = Join-Path $env:RUNNER_TEMP 'launch4j.exe'
+        Invoke-WebRequest `
+          -Uri 'https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.exe/download' `
+          -OutFile $launch4jInstaller
+        $launch4jHash = (Get-FileHash $launch4jInstaller -Algorithm SHA256).Hash
+        if ($launch4jHash -ne 'A7A1E32A295FE3D501FA623D6986FF0FEBd60d770223D699E01735666128B5F0') {
+          throw "Unexpected Launch4j installer hash: $launch4jHash"
+        }
+        $launch4jInstall = Start-Process -FilePath $launch4jInstaller -ArgumentList '/S' -Wait -PassThru
+        if ($launch4jInstall.ExitCode -ne 0) {
+          throw "Launch4j installer failed with exit code $($launch4jInstall.ExitCode)"
+        }
+        $launch4jDirs = @(
+          (Join-Path $env:ProgramFiles 'Launch4j'),
+          (Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Launch4j')
+        )
+        $launch4jDir = $launch4jDirs | Where-Object { Test-Path (Join-Path $_ 'launch4jc.exe') } | Select-Object -First 1
+        if (-not $launch4jDir) {
+          throw 'Launch4j launch4jc.exe was not found after installation'
+        }
+
+        $innoInstaller = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
+        Invoke-WebRequest `
+          -Uri 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_4/innosetup-6.7.4.exe' `
+          -OutFile $innoInstaller
+        $innoHash = (Get-FileHash $innoInstaller -Algorithm SHA256).Hash
+        if ($innoHash -ne 'A549929319F9120716677C685535CA4671E4B937B5FDC87E2585F32D8EB30E8C') {
+          throw "Unexpected Inno Setup installer hash: $innoHash"
+        }
+        $innoInstall = Start-Process `
+          -FilePath $innoInstaller `
+          -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-' `
+          -Wait -PassThru
+        if ($innoInstall.ExitCode -ne 0) {
+          throw "Inno Setup installer failed with exit code $($innoInstall.ExitCode)"
+        }
+        $innoDir = Get-ChildItem ([Environment]::GetFolderPath('ProgramFilesX86')) -Directory -Filter 'Inno Setup*' | Sort-Object Name -Descending | Select-Object -First 1
+        $iscc = Join-Path $innoDir.FullName 'ISCC.exe'
+        if (-not (Test-Path $iscc)) {
+          throw 'Inno Setup ISCC.exe was not found after installation'
+        }
+
+        $env:PATH = "$launch4jDir;$(Split-Path $iscc);$env:PATH"
+        $launch4jDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        Split-Path $iscc | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        where.exe launch4jc
+        where.exe iscc
+    - name: Build Windows artifacts
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        .\gradlew.bat --no-daemon --max-workers=2 innosetup
+        Get-ChildItem -Path build/innosetup,build/libs | Select-Object FullName,Length
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-release
+        path: |
+          build/innosetup/setup.exe
+          build/libs/emailconverter-*-all.jar
+    - name: Create or update draft release
+      shell: pwsh
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $tag = $env:GITHUB_REF_NAME
+        $jar = Get-ChildItem build/libs -Filter 'emailconverter-*-all.jar' | Select-Object -First 1
+        if (-not $jar) {
+          throw 'Built jar was not found'
+        }
+        gh release view $tag *> $null
+        if ($LASTEXITCODE -eq 0) {
+          gh release upload $tag $jar.FullName build/innosetup/setup.exe --clobber
+        } else {
+          gh release create $tag $jar.FullName build/innosetup/setup.exe --title $tag --draft --generate-notes
+        }
