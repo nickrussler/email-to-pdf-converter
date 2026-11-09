@@ -60,6 +60,7 @@ public class MainWindow {
     private JCheckBox chckbxUseProxy;
     private JRadioButton rdbtnAutomaticProxySelection;
     private JRadioButton rdbtnManual;
+    private String currentRenderer = "Chrome";
 
     /**
      * Launch the application.
@@ -99,16 +100,22 @@ public class MainWindow {
         frmEmailToPdf.setIconImage(Toolkit.getDefaultToolkit().getImage(MainWindow.class.getResource("/icons/logo_emlconverter-482_16x16.png")));
         frmEmailToPdf.setResizable(false);
         frmEmailToPdf.setTitle("Email to PDF Converter");
-        frmEmailToPdf.getContentPane().setBackground(Color.WHITE);
         frmEmailToPdf.setBackground(Color.WHITE);
-        frmEmailToPdf.setBounds(100, 100, 700, 850);
         frmEmailToPdf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frmEmailToPdf.getContentPane().setLayout(null);
-        frmEmailToPdf.setLocationRelativeTo(null);
+
+        JPanel contentPanel = new JPanel();
+        contentPanel.setBackground(Color.WHITE);
+        contentPanel.setLayout(null);
+        contentPanel.setPreferredSize(new Dimension(700, 820));
+
+        JScrollPane contentScrollPane = new JScrollPane(contentPanel);
+        contentScrollPane.setBorder(null);
+        contentScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        frmEmailToPdf.setContentPane(contentScrollPane);
 
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.setBounds(10, 11, 507, 210);
-        frmEmailToPdf.getContentPane().add(scrollPane);
+        contentPanel.add(scrollPane);
         scrollPane.setBorder(new TitledBorder(null, "Email Files", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         scrollPane.setBackground(Color.WHITE);
 
@@ -168,7 +175,7 @@ public class MainWindow {
         });
         btnAddFolder.setIcon(new ImageIcon(MainWindow.class.getResource("/icons/folder_add.png")));
         btnAddFolder.setBounds(527, 72, 140, 34);
-        frmEmailToPdf.getContentPane().add(btnAddFolder);
+        contentPanel.add(btnAddFolder);
 
         final JFileChooser fileChooser = new JFileChooser();
         fileChooser.setMultiSelectionEnabled(true);
@@ -187,7 +194,7 @@ public class MainWindow {
             }
         });
         btnAddFile.setBounds(527, 36, 140, 34);
-        frmEmailToPdf.getContentPane().add(btnAddFile);
+        contentPanel.add(btnAddFile);
 
         JButton btnClearList = new JButton("Clear List");
         btnClearList.setIcon(new ImageIcon(MainWindow.class.getResource("/icons/cross.png")));
@@ -198,13 +205,13 @@ public class MainWindow {
             }
         });
         btnClearList.setBounds(527, 154, 140, 34);
-        frmEmailToPdf.getContentPane().add(btnClearList);
+        contentPanel.add(btnClearList);
 
         JPanel panel = new JPanel();
         panel.setBorder(new TitledBorder(null, "Options", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         panel.setBackground(Color.WHITE);
         panel.setBounds(10, 232, 664, 248);
-        frmEmailToPdf.getContentPane().add(panel);
+        contentPanel.add(panel);
         panel.setLayout(null);
 
         final JCheckBox chckbxAddEmailHeaders = new JCheckBox("Add Email headers to the PDF document");
@@ -363,7 +370,11 @@ public class MainWindow {
         rendererComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                executableField.setText("");
+                String selectedRenderer = String.valueOf(rendererComboBox.getSelectedItem());
+                if (!selectedRenderer.equals(currentRenderer)) {
+                    currentRenderer = selectedRenderer;
+                    executableField.setText("");
+                }
                 updateRendererOptions();
             }
         });
@@ -395,7 +406,7 @@ public class MainWindow {
         panelProgress.setBorder(new TitledBorder(null, "", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         panelProgress.setBackground(Color.WHITE);
         panelProgress.setBounds(10, 488, 664, 127);
-        frmEmailToPdf.getContentPane().add(panelProgress);
+        contentPanel.add(panelProgress);
         panelProgress.setLayout(null);
 
         btnStartConversion = new JButton("Start Conversion");
@@ -453,13 +464,13 @@ public class MainWindow {
             }
         });
         btnRemoveSelectedFrom.setBounds(527, 117, 140, 34);
-        frmEmailToPdf.getContentPane().add(btnRemoveSelectedFrom);
+        contentPanel.add(btnRemoveSelectedFrom);
 
         JScrollPane scrollPaneLog = new JScrollPane();
         scrollPaneLog.setBounds(10, 626, 664, 183);
         scrollPaneLog.setBorder(new TitledBorder(null, "Log", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         scrollPaneLog.setBackground(Color.WHITE);
-        frmEmailToPdf.getContentPane().add(scrollPaneLog);
+        contentPanel.add(scrollPaneLog);
 
         JTextArea textArea = new JTextArea();
         textArea.setFont(new Font("Lucida Console", Font.PLAIN, 12));
@@ -477,6 +488,13 @@ public class MainWindow {
 
         mc.setContainer(scrollPaneLog);
         mc.setMessageLines(1000);
+
+        frmEmailToPdf.pack();
+        Rectangle maxBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        Dimension packedSize = frmEmailToPdf.getSize();
+        int scrollBarWidth = contentScrollPane.getVerticalScrollBar().getPreferredSize().width;
+        frmEmailToPdf.setSize(Math.min(packedSize.width + scrollBarWidth, maxBounds.width), Math.min(packedSize.height, maxBounds.height));
+        frmEmailToPdf.setLocationRelativeTo(null);
     }
 
     private void updateRendererOptions() {
