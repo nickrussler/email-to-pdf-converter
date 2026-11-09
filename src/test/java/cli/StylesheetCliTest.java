@@ -48,10 +48,10 @@ public class StylesheetCliTest {
         File output = new File(temporaryFolder.newFolder(), "missing.pdf");
 
         runMain(
-                "--renderer", "chrome", "--stylesheet", new File(temporaryFolder.getRoot(), "does-not-exist.css").getAbsolutePath(), "-o", output.getAbsolutePath(), "-hh", email.getAbsolutePath());
+                "--renderer", "chrome", "--custom-stylesheet-path", new File(temporaryFolder.getRoot(), "does-not-exist.css").getAbsolutePath(), "-o", output.getAbsolutePath(), "-hh", email.getAbsolutePath());
 
         assertFalse(output.exists());
-        assertThat(systemErrRule.getLog(), containsString("Could not read stylesheet"));
+        assertThat(systemErrRule.getLog(), containsString("Could not read custom stylesheet"));
     }
 
     @Test
@@ -61,10 +61,10 @@ public class StylesheetCliTest {
         File output = new File(temporaryFolder.newFolder(), "unsupported.pdf");
 
         runMain(
-                "--renderer", "wkhtmltopdf", "--stylesheet", stylesheet.getAbsolutePath(), "-o", output.getAbsolutePath(), "-hh", email.getAbsolutePath());
+                "--renderer", "wkhtmltopdf", "--custom-stylesheet-path", stylesheet.getAbsolutePath(), "-o", output.getAbsolutePath(), "-hh", email.getAbsolutePath());
 
         assertFalse(output.exists());
-        assertThat(systemErrRule.getLog(), containsString("--stylesheet is only supported by the Chrome renderer"));
+        assertThat(systemErrRule.getLog(), containsString("--custom-stylesheet-path is only supported by the Chrome renderer"));
     }
 
     @Test
@@ -96,7 +96,7 @@ public class StylesheetCliTest {
         File output = new File(temporaryFolder.newFolder(), "applied-page.pdf");
 
         runMain(
-                "--renderer", "chrome", "--orientation", "landscape", "--stylesheet", stylesheet.getAbsolutePath(), "-o", output.getAbsolutePath(), "-hh", email.getAbsolutePath());
+                "--renderer", "chrome", "--orientation", "landscape", "--custom-stylesheet-path", stylesheet.getAbsolutePath(), "-o", output.getAbsolutePath(), "-hh", email.getAbsolutePath());
 
         assertTrue(output.isFile());
         try (PDDocument document = Loader.loadPDF(output)) {

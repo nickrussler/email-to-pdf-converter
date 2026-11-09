@@ -73,8 +73,8 @@ Usage: EmailToPDFConverter [options] <email-file>
       Default: auto
     --browser-cache-dir
       Directory for an automatically downloaded Chrome headless shell.
-    --stylesheet
-      Caller-supplied print stylesheet for the Chrome renderer. Relative URLs
+    --custom-stylesheet-path
+      Path to a custom print stylesheet for the Chrome renderer. Relative URLs
       in the CSS are not resolved against the stylesheet directory.
     --dangerous-enable-javascript
       Execute JavaScript contained in the email HTML. This is unsafe and
@@ -108,24 +108,24 @@ Downloaded shells are cached per version and platform. Use `--browser-cache-dir`
 
 Use `--orientation landscape` for landscape output. Chrome honors orientation declarations in the email's print CSS; if the final PDF is portrait, conversion fails with a clear error instead of writing a mismatched document. The legacy wkhtmltopdf renderer may still overlap complex table text in landscape.
 
-### Caller-supplied print stylesheet
+### Custom print stylesheet
 
-Chrome accepts an optional caller-supplied print stylesheet:
+Chrome accepts an optional custom print stylesheet:
 
 ```text
---stylesheet PATH
+--custom-stylesheet-path PATH
 ```
 
 The file is read as UTF-8 and its CSS text is injected into the loaded document through Chrome DevTools. Relative asset URLs are not resolved against the stylesheet file's directory. The option is independent of `--orientation`.
 
-This is not a WeasyPrint-style user-origin stylesheet. Chrome uses its inspector stylesheet cascade, so a more specific `!important` rule in the email can still win. Use `--orientation landscape` together with an example override for issue #77:
+Chrome uses its inspector stylesheet cascade, so a more specific `!important` rule in the email can still win. Use `--orientation landscape` together with an example override for issue #77:
 
 ```css
 @page { size: auto !important; }
 ```
 
 ```bash
-java -jar emailconverter.jar --orientation landscape --stylesheet landscape.css "Test email conversion.msg"
+java -jar emailconverter.jar --orientation landscape --custom-stylesheet-path landscape.css "Test email conversion.msg"
 ```
 
 The stylesheet is supplied by the caller; orientation alone never injects it. If a surviving page rule prevents landscape output, conversion fails with the landscape validation error.
