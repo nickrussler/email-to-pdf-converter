@@ -22,7 +22,9 @@ import com.google.common.base.Throwables;
 import com.google.common.io.Files;
 import gui.MainWindow;
 import java.io.File;
+import java.io.IOException;
 import java.net.Proxy;
+import java.nio.charset.StandardCharsets;
 import mimeparser.MimeMessageConverter;
 import render.RenderOptions;
 import util.HttpUtils;
@@ -121,8 +123,22 @@ public class Main {
             return;
         }
 
+        String printStylesheet = null;
+        if (!Strings.isNullOrEmpty(cli.getStylesheet())) {
+            if (renderer != RenderOptions.Renderer.CHROME) {
+                Logger.error("--stylesheet is only supported by the Chrome renderer.");
+                return;
+            }
+            try {
+                printStylesheet = Files.asCharSource(new File(cli.getStylesheet()), StandardCharsets.UTF_8).read();
+            } catch (IOException e) {
+                Logger.error("Could not read stylesheet %s: %s", cli.getStylesheet(), e.getMessage());
+                return;
+            }
+        }
+
         RenderOptions renderOptions = new RenderOptions(
-                renderer, cli.getRendererExecutable(), proxy, cli.getPageSize(), cli.getDPI(), cli.isDangerousEnableJavaScript(), null, browserDownload, cli.getBrowserCacheDir(), orientation);
+                renderer, cli.getRendererExecutable(), proxy, cli.getPageSize(), cli.getDPI(), cli.isDangerousEnableJavaScript(), null, browserDownload, cli.getBrowserCacheDir(), orientation, printStylesheet);
 
         try {
             MimeMessageConverter.convertToPdf(

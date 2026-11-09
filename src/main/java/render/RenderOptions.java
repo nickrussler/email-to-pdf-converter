@@ -89,6 +89,7 @@ public final class RenderOptions {
     private final BrowserDownload browserDownload;
     private final String browserCacheDir;
     private final Orientation orientation;
+    private final String printStylesheet;
 
     public RenderOptions(
                          Renderer renderer, String executable, String proxy, String pageSize, String dpi, boolean javaScriptEnabled, List<String> extParams) {
@@ -102,6 +103,11 @@ public final class RenderOptions {
 
     public RenderOptions(
                          Renderer renderer, String executable, String proxy, String pageSize, String dpi, boolean javaScriptEnabled, List<String> extParams, BrowserDownload browserDownload, String browserCacheDir, Orientation orientation) {
+        this(renderer, executable, proxy, pageSize, dpi, javaScriptEnabled, extParams, browserDownload, browserCacheDir, orientation, null);
+    }
+
+    public RenderOptions(
+                         Renderer renderer, String executable, String proxy, String pageSize, String dpi, boolean javaScriptEnabled, List<String> extParams, BrowserDownload browserDownload, String browserCacheDir, Orientation orientation, String printStylesheet) {
         this.renderer = renderer;
         this.executable = executable;
         this.proxy = proxy;
@@ -112,6 +118,7 @@ public final class RenderOptions {
         this.browserDownload = browserDownload == null ? BrowserDownload.AUTO : browserDownload;
         this.browserCacheDir = browserCacheDir;
         this.orientation = orientation == null ? Orientation.PORTRAIT : orientation;
+        this.printStylesheet = printStylesheet;
     }
 
     /**
@@ -159,5 +166,9 @@ public final class RenderOptions {
 
     public Orientation getOrientation() {
         return orientation;
+    }
+
+    public String getPrintStylesheet() {
+        return printStylesheet;
     }
 }

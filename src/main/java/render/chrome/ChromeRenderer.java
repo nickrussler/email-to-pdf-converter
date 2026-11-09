@@ -76,7 +76,7 @@ public final class ChromeRenderer implements PdfRenderer {
         logUnsupportedOptions();
 
         PaperSize paperSize = PaperSize.fromName(options.getPageSize());
-        renderHtml(html, outputPdf, paperSize.getWidthPoints(), paperSize.getHeightPoints(), PRINT_MARGIN_MM, true, options.getOrientation() == RenderOptions.Orientation.LANDSCAPE);
+        renderHtml(html, outputPdf, paperSize.getWidthPoints(), paperSize.getHeightPoints(), PRINT_MARGIN_MM, true, options.getOrientation() == RenderOptions.Orientation.LANDSCAPE, options.getPrintStylesheet());
     }
 
     @Override
@@ -86,7 +86,7 @@ public final class ChromeRenderer implements PdfRenderer {
             tmpProbe = File.createTempFile("emailtopdf-header-probe", ".pdf");
             double widthPoints = widthPx * 72.0 / CSS_PX_PER_INCH;
             double heightPoints = HEADER_PROBE_PAGE_HEIGHT_PX * 72.0 / CSS_PX_PER_INCH;
-            renderHtml(headerHtml, tmpProbe, widthPoints, heightPoints, 0, false, false);
+            renderHtml(headerHtml, tmpProbe, widthPoints, heightPoints, 0, false, false, null);
 
             int measuredHeight = PdfContentHeightMeasurer.measureContentHeightPx(tmpProbe, widthPx);
             return Math.max(measuredHeight, HEADER_MIN_HEIGHT);
@@ -98,7 +98,7 @@ public final class ChromeRenderer implements PdfRenderer {
         }
     }
 
-    private void renderHtml(String html, File outputPdf, double widthPoints, double heightPoints, double marginMm, boolean printBackground, boolean landscape) throws Exception {
+    private void renderHtml(String html, File outputPdf, double widthPoints, double heightPoints, double marginMm, boolean printBackground, boolean landscape, String stylesheet) throws Exception {
         String chromeProxy = ProxyUrl.normalizeForChrome(options.getProxy());
         ChromeBrowserProvisioner.Browser browserInfo = resolveBrowser();
         String executable = browserInfo.getExecutable();
@@ -156,6 +156,7 @@ public final class ChromeRenderer implements PdfRenderer {
             document.addProperty("html", html);
             cdp.sendCommand("Page.setDocumentContent", document);
             cdp.awaitLoad();
+            applyStylesheet(cdp, frameId, stylesheet);
 
             JsonObject pdfOptions = new JsonObject();
             pdfOptions.addProperty("printBackground", printBackground);
@@ -191,6 +192,27 @@ public final class ChromeRenderer implements PdfRenderer {
             deleteRecursively(userDataDir);
             deleteTempFile(browserLog);
         }
+    }
+
+    private static void applyStylesheet(ChromeCdpClient cdp, String frameId, String stylesheet) throws Exception {
+        if (stylesheet == null || stylesheet.isEmpty()) {
+            return;
+        }
+
+        cdp.sendCommand("DOM.enable");
+        cdp.sendCommand("CSS.enable");
+
+        JsonObject createParams = new JsonObject();
+        createParams.addProperty("frameId", frameId);
+        JsonObject created = cdp.sendCommand("CSS.createStyleSheet", createParams);
+        if (!created.has("styleSheetId")) {
+            throw new IOException("Chrome did not return a stylesheet id");
+        }
+
+        JsonObject textParams = new JsonObject();
+        textParams.addProperty("styleSheetId", created.get("styleSheetId").getAsString());
+        textParams.addProperty("text", stylesheet);
+        cdp.sendCommand("CSS.setStyleSheetText", textParams);
     }
 
     static void validateLandscape(byte[] pdf) throws IOException {

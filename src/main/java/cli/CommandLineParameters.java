@@ -106,6 +106,10 @@ public class CommandLineParameters {
     private String browserCacheDir;
 
     @Parameter(
+            names = {"--stylesheet"}, description = "Caller-supplied print stylesheet for the Chrome renderer. Relative URLs in the CSS are not resolved against the stylesheet directory.")
+    private String stylesheet;
+
+    @Parameter(
             names = {"--dangerous-enable-javascript"}, description = "Execute JavaScript contained in the email HTML. This is unsafe and disabled by default.")
     private boolean dangerousEnableJavaScript = false;
 
@@ -267,6 +271,14 @@ public class CommandLineParameters {
 
     public void setBrowserCacheDir(String browserCacheDir) {
         this.browserCacheDir = browserCacheDir;
+    }
+
+    public String getStylesheet() {
+        return stylesheet;
+    }
+
+    public void setStylesheet(String stylesheet) {
+        this.stylesheet = stylesheet;
     }
 
     public boolean isDangerousEnableJavaScript() {
