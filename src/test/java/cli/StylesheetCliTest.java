@@ -18,6 +18,7 @@ package cli;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -68,9 +69,30 @@ public class StylesheetCliTest {
 
     @Test
     public void cliReadsStylesheetAndOverridesAppliedPortraitPageRule() throws Exception {
+        assertStylesheetOverridesAppliedPortraitPageRule(writeStylesheet("@page { size: auto !important; }"));
+    }
+
+    @Test
+    public void cliStripsUtf8BomFromStylesheet() throws Exception {
+        assertStylesheetOverridesAppliedPortraitPageRule(writeBomStylesheet("@page { size: auto !important; }"));
+    }
+
+    @Test
+    public void stripsOnlyOneLeadingBom() {
+        assertEquals("@page { size: auto !important; }", Main.stripLeadingBom("\uFEFF@page { size: auto !important; }"));
+        assertEquals("\uFEFF@page { size: auto !important; }", Main.stripLeadingBom("\uFEFF\uFEFF@page { size: auto !important; }"));
+    }
+
+    private File writeEmail(String name, String body) throws IOException {
+        File email = new File(temporaryFolder.newFolder(), name);
+        String content = "Mime-Version: 1.0\r\n" + "Date: Thu, 11 Dec 2014 05:20:45 -0800\r\n" + "Message-ID: <" + name + "@example.com>\r\n" + "From: sender@example.com\r\n" + "To: recipient@example.com\r\n" + "Subject: Stylesheet test\r\n" + "Content-Type: text/html; charset=utf-8\r\n" + "Content-Transfer-Encoding: 8bit\r\n" + "\r\n" + body;
+        Files.asCharSink(email, StandardCharsets.UTF_8).write(content);
+        return email;
+    }
+
+    private void assertStylesheetOverridesAppliedPortraitPageRule(File stylesheet) throws Exception {
         File email = writeEmail(
                 "applied-page.eml", "<html><head><style>@page WordSection1 { size: 8.5in 11in; } body { page: WordSection1; }</style></head><body><p>CLI_STYLESHEET_MARKER</p></body></html>");
-        File stylesheet = writeStylesheet("@page { size: auto !important; }");
         File output = new File(temporaryFolder.newFolder(), "applied-page.pdf");
 
         runMain(
@@ -82,16 +104,15 @@ public class StylesheetCliTest {
         }
     }
 
-    private File writeEmail(String name, String body) throws IOException {
-        File email = new File(temporaryFolder.newFolder(), name);
-        String content = "Mime-Version: 1.0\r\n" + "Date: Thu, 11 Dec 2014 05:20:45 -0800\r\n" + "Message-ID: <" + name + "@example.com>\r\n" + "From: sender@example.com\r\n" + "To: recipient@example.com\r\n" + "Subject: Stylesheet test\r\n" + "Content-Type: text/html; charset=utf-8\r\n" + "Content-Transfer-Encoding: 8bit\r\n" + "\r\n" + body;
-        Files.asCharSink(email, StandardCharsets.UTF_8).write(content);
-        return email;
-    }
-
     private File writeStylesheet(String css) throws IOException {
         File stylesheet = new File(temporaryFolder.newFolder(), "print.css");
         Files.asCharSink(stylesheet, StandardCharsets.UTF_8).write(css);
+        return stylesheet;
+    }
+
+    private File writeBomStylesheet(String css) throws IOException {
+        File stylesheet = new File(temporaryFolder.newFolder(), "print-bom.css");
+        Files.asByteSink(stylesheet).write(("\uFEFF" + css).getBytes(StandardCharsets.UTF_8));
         return stylesheet;
     }
 
