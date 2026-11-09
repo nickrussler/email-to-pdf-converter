@@ -63,6 +63,7 @@ public class MainWindowSmokeTest {
             assertTrue(hasLabel(frame[0].getContentPane(), "Executable:"));
             assertTrue(hasLabel(frame[0].getContentPane(), "Download mode:"));
             assertTrue(hasLabel(frame[0].getContentPane(), "Cache directory:"));
+            assertTrue(hasLabel(frame[0].getContentPane(), "Custom stylesheet:"));
 
             JComboBox<?> orientation = comboWithItem(frame[0].getContentPane(), "Landscape");
             assertNotNull(orientation);
@@ -74,23 +75,29 @@ public class MainWindowSmokeTest {
             assertEquals(5, browserDownload.getItemCount());
             final JTextField executable = (JTextField) componentByName(frame[0].getContentPane(), "executableField");
             final JTextField cache = (JTextField) componentByName(frame[0].getContentPane(), "browserCacheField");
+            final JTextField customStylesheet = (JTextField) componentByName(frame[0].getContentPane(), "customStylesheetField");
             assertNotNull(executable);
             assertNotNull(cache);
+            assertNotNull(customStylesheet);
             assertTrue(browserDownload.isEnabled());
             assertTrue(cache.isEnabled());
+            assertTrue(customStylesheet.isEnabled());
 
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
                     browserDownload.setSelectedItem("Force");
                     cache.setText("/tmp/browser cache");
+                    customStylesheet.setText("/tmp/custom print.css");
                     executable.setText("/tmp/Chrome");
                 }
             });
             assertFalse(browserDownload.isEnabled());
             assertFalse(cache.isEnabled());
+            assertTrue(customStylesheet.isEnabled());
             assertEquals("Force", browserDownload.getSelectedItem());
             assertEquals("/tmp/browser cache", cache.getText());
+            assertEquals("/tmp/custom print.css", customStylesheet.getText());
 
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
@@ -100,8 +107,10 @@ public class MainWindowSmokeTest {
             });
             assertTrue(browserDownload.isEnabled());
             assertTrue(cache.isEnabled());
+            assertTrue(customStylesheet.isEnabled());
             assertEquals("Force", browserDownload.getSelectedItem());
             assertEquals("/tmp/browser cache", cache.getText());
+            assertEquals("/tmp/custom print.css", customStylesheet.getText());
 
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
@@ -113,6 +122,8 @@ public class MainWindowSmokeTest {
             assertEquals("", executable.getText());
             assertFalse(browserDownload.isEnabled());
             assertFalse(cache.isEnabled());
+            assertFalse(customStylesheet.isEnabled());
+            assertEquals("/tmp/custom print.css", customStylesheet.getText());
 
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
@@ -122,6 +133,7 @@ public class MainWindowSmokeTest {
             });
             assertTrue(browserDownload.isEnabled());
             assertTrue(cache.isEnabled());
+            assertTrue(customStylesheet.isEnabled());
 
             final ActionListener[] rendererListeners = renderer.getActionListeners();
             SwingUtilities.invokeAndWait(new Runnable() {

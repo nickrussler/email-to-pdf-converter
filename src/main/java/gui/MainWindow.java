@@ -56,6 +56,8 @@ public class MainWindow {
     private JComboBox<String> browserDownloadComboBox;
     private JTextField browserCacheField;
     private JButton browserCacheBrowseButton;
+    private JTextField customStylesheetField;
+    private JButton customStylesheetBrowseButton;
     private JLabel executableHint;
     private JLabel browserOptionsHint;
     private JCheckBox chckbxUseProxy;
@@ -107,7 +109,7 @@ public class MainWindow {
         JPanel contentPanel = new JPanel();
         contentPanel.setBackground(Color.WHITE);
         contentPanel.setLayout(null);
-        contentPanel.setPreferredSize(new Dimension(700, 850));
+        contentPanel.setPreferredSize(new Dimension(700, 870));
 
         JScrollPane contentScrollPane = new JScrollPane(contentPanel);
         contentScrollPane.setBorder(null);
@@ -211,7 +213,7 @@ public class MainWindow {
         JPanel panel = new JPanel();
         panel.setBorder(new TitledBorder(null, "Options", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         panel.setBackground(Color.WHITE);
-        panel.setBounds(10, 232, 664, 276);
+        panel.setBounds(10, 232, 664, 296);
         contentPanel.add(panel);
         panel.setLayout(null);
 
@@ -277,9 +279,9 @@ public class MainWindow {
         panel.add(executableHint);
 
         JPanel browserPanel = new JPanel();
-        browserPanel.setBorder(new TitledBorder(null, "Chrome Browser", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+        browserPanel.setBorder(new TitledBorder(null, "Chrome Options", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         browserPanel.setBackground(Color.WHITE);
-        browserPanel.setBounds(10, 120, 644, 90);
+        browserPanel.setBounds(10, 120, 644, 108);
         browserPanel.setLayout(null);
         panel.add(browserPanel);
 
@@ -319,10 +321,36 @@ public class MainWindow {
         });
         browserPanel.add(browserCacheBrowseButton);
 
+        JLabel lblCustomStylesheet = new JLabel("Custom stylesheet:");
+        lblCustomStylesheet.setBounds(10, 51, 120, 20);
+        browserPanel.add(lblCustomStylesheet);
+
+        customStylesheetField = new JTextField();
+        customStylesheetField.setName("customStylesheetField");
+        customStylesheetField.setBounds(136, 48, 412, 26);
+        customStylesheetField.setToolTipText("Optional Chrome CSS file. Relative URLs are not resolved against the stylesheet directory.");
+        browserPanel.add(customStylesheetField);
+
+        customStylesheetBrowseButton = new JButton("Browse");
+        customStylesheetBrowseButton.setBounds(556, 46, 80, 30);
+        customStylesheetBrowseButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser stylesheetChooser = new JFileChooser();
+                stylesheetChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                stylesheetChooser.setFileFilter(new FileNameExtensionFilter("CSS files", "css"));
+                stylesheetChooser.setDialogTitle("Select custom print stylesheet");
+                if (stylesheetChooser.showOpenDialog(frmEmailToPdf) == JFileChooser.APPROVE_OPTION) {
+                    customStylesheetField.setText(stylesheetChooser.getSelectedFile().getAbsolutePath());
+                }
+            }
+        });
+        browserPanel.add(customStylesheetBrowseButton);
+
         browserOptionsHint = new JLabel("Browser acquisition and caching happen automatically during conversion.");
         browserOptionsHint.setFont(new Font("Tahoma", Font.PLAIN, 11));
         browserOptionsHint.setForeground(Color.GRAY);
-        browserOptionsHint.setBounds(10, 49, 624, 18);
+        browserOptionsHint.setBounds(10, 78, 624, 18);
         browserPanel.add(browserOptionsHint);
 
         chckbxUseProxy = new JCheckBox("Use Proxy");
@@ -338,19 +366,19 @@ public class MainWindow {
             }
         });
         chckbxUseProxy.setBackground(Color.WHITE);
-        chckbxUseProxy.setBounds(10, 219, 86, 23);
+        chckbxUseProxy.setBounds(10, 239, 86, 23);
         panel.add(chckbxUseProxy);
 
         rdbtnAutomaticProxySelection = new JRadioButton("Automatic Proxy Selection");
         rdbtnAutomaticProxySelection.setSelected(true);
         rdbtnAutomaticProxySelection.setEnabled(false);
         rdbtnAutomaticProxySelection.setBackground(Color.WHITE);
-        rdbtnAutomaticProxySelection.setBounds(98, 219, 180, 23);
+        rdbtnAutomaticProxySelection.setBounds(98, 239, 180, 23);
         panel.add(rdbtnAutomaticProxySelection);
 
         textField = new JTextField();
         textField.setEnabled(false);
-        textField.setBounds(352, 220, 290, 22);
+        textField.setBounds(352, 240, 290, 22);
         panel.add(textField);
         textField.setColumns(10);
 
@@ -363,7 +391,7 @@ public class MainWindow {
         });
         rdbtnManual.setEnabled(false);
         rdbtnManual.setBackground(Color.WHITE);
-        rdbtnManual.setBounds(280, 219, 66, 23);
+        rdbtnManual.setBounds(280, 239, 66, 23);
         panel.add(rdbtnManual);
 
         ButtonGroup bg = new ButtonGroup();
@@ -372,12 +400,12 @@ public class MainWindow {
 
         final JCheckBox chckbxExtractAttachments = new JCheckBox("Extract Attachments");
         chckbxExtractAttachments.setBackground(Color.WHITE);
-        chckbxExtractAttachments.setBounds(10, 246, 150, 23);
+        chckbxExtractAttachments.setBounds(10, 266, 150, 23);
         panel.add(chckbxExtractAttachments);
 
         final JCheckBox chckbxAddAttachmentNames = new JCheckBox("Add Attachment Names");
         chckbxAddAttachmentNames.setBackground(Color.WHITE);
-        chckbxAddAttachmentNames.setBounds(160, 246, 180, 23);
+        chckbxAddAttachmentNames.setBounds(160, 266, 180, 23);
         panel.add(chckbxAddAttachmentNames);
 
         rendererComboBox.addActionListener(new ActionListener() {
@@ -418,7 +446,7 @@ public class MainWindow {
         JPanel panelProgress = new JPanel();
         panelProgress.setBorder(new TitledBorder(null, "", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         panelProgress.setBackground(Color.WHITE);
-        panelProgress.setBounds(10, 516, 664, 127);
+        panelProgress.setBounds(10, 536, 664, 127);
         contentPanel.add(panelProgress);
         panelProgress.setLayout(null);
 
@@ -446,11 +474,12 @@ public class MainWindow {
                 final String executable = executableField.getText();
                 final String browserDownload = selectedBrowserDownload();
                 final String browserCacheDir = browserCacheField.getText();
+                final String customStylesheetPath = customStylesheetField.getText();
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
                         startConversion(
-                                Collections.list(listModel.elements()), renderer, orientation, executable, browserDownload, browserCacheDir, chckbxAddEmailHeaders.isSelected(), proxy, chckbxAddAttachmentNames.isSelected(), chckbxExtractAttachments.isSelected());
+                                Collections.list(listModel.elements()), renderer, orientation, executable, browserDownload, browserCacheDir, customStylesheetPath, chckbxAddEmailHeaders.isSelected(), proxy, chckbxAddAttachmentNames.isSelected(), chckbxExtractAttachments.isSelected());
                     }
                 }).start();
             }
@@ -481,7 +510,7 @@ public class MainWindow {
         contentPanel.add(btnRemoveSelectedFrom);
 
         JScrollPane scrollPaneLog = new JScrollPane();
-        scrollPaneLog.setBounds(10, 654, 664, 183);
+        scrollPaneLog.setBounds(10, 674, 664, 183);
         scrollPaneLog.setBorder(new TitledBorder(null, "Log", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         scrollPaneLog.setBackground(Color.WHITE);
         contentPanel.add(scrollPaneLog);
@@ -519,6 +548,9 @@ public class MainWindow {
         browserDownloadComboBox.setEnabled(downloadOptionsEnabled);
         browserCacheField.setEnabled(downloadOptionsEnabled);
         browserCacheBrowseButton.setEnabled(downloadOptionsEnabled);
+        customStylesheetField.setEnabled(chrome);
+        customStylesheetBrowseButton.setEnabled(chrome);
+        customStylesheetField.setToolTipText(chrome ? "Optional Chrome CSS file. Relative URLs are not resolved against the stylesheet directory." : "Chrome only; not used by wkhtmltopdf.");
         executableHint.setText(chrome ? "Automatic when blank" : "Installed wkhtmltopdf when blank");
 
         if (!chrome) {
@@ -587,7 +619,7 @@ public class MainWindow {
     }
 
     static List<String> buildConversionArguments(
-                                                 String renderer, String orientation, String executable, String browserDownload, String browserCacheDir, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
+                                                 String renderer, String orientation, String executable, String browserDownload, String browserCacheDir, String customStylesheetPath, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
         List<String> args = new ArrayList<String>();
 
         if (!showHeaders) {
@@ -613,6 +645,11 @@ public class MainWindow {
         args.add("--orientation");
         args.add("landscape".equalsIgnoreCase(orientation) ? "landscape" : "portrait");
 
+        if ("chrome".equals(rendererName) && !isBlank(customStylesheetPath)) {
+            args.add("--custom-stylesheet-path");
+            args.add(customStylesheetPath);
+        }
+
         if (!isBlank(executable)) {
             args.add("--renderer-executable");
             args.add(executable);
@@ -634,10 +671,10 @@ public class MainWindow {
      * Start converting the email files.
      */
     private void startConversion(
-                                 List<String> l, String renderer, String orientation, String executable, String browserDownload, String browserCacheDir, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
+                                 List<String> l, String renderer, String orientation, String executable, String browserDownload, String browserCacheDir, String customStylesheetPath, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
         try {
             ArrayList<String> argsOptions = new ArrayList<String>(
-                    buildConversionArguments(renderer, orientation, executable, browserDownload, browserCacheDir, showHeaders, proxy, addAttachmentNames, extractAttachments));
+                    buildConversionArguments(renderer, orientation, executable, browserDownload, browserCacheDir, customStylesheetPath, showHeaders, proxy, addAttachmentNames, extractAttachments));
 
             int listSize = l.size();
             for (int i = 0; i < listSize; i++) {

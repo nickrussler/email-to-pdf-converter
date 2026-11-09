@@ -29,7 +29,7 @@ import org.junit.Test;
 public class MainWindowArgumentsTest {
     @Test
     public void defaultsToChromeWithAutomaticBrowserDownload() {
-        List<String> args = MainWindow.buildConversionArguments("chrome", "portrait", "", "auto", "", true, null, false, false);
+        List<String> args = MainWindow.buildConversionArguments("chrome", "portrait", "", "auto", "", "", true, null, false, false);
         CommandLineParameters parsed = parse(args);
 
         assertEquals("chrome", parsed.getRenderer());
@@ -42,7 +42,7 @@ public class MainWindowArgumentsTest {
 
     @Test
     public void passesLandscapeOrientation() {
-        CommandLineParameters parsed = parse(MainWindow.buildConversionArguments("chrome", "landscape", "", "auto", "", true, null, false, false));
+        CommandLineParameters parsed = parse(MainWindow.buildConversionArguments("chrome", "landscape", "", "auto", "", "", true, null, false, false));
         assertEquals("landscape", parsed.getOrientation());
     }
 
@@ -51,14 +51,14 @@ public class MainWindowArgumentsTest {
         String[][] modes = {{"auto", "auto"}, {"never", "never"}, {"once", "once"}, {"latest", "latest"}, {"force", "force"}};
 
         for (String[] mode : modes) {
-            CommandLineParameters parsed = parse(MainWindow.buildConversionArguments("chrome", "portrait", "", mode[0], "", true, null, false, false));
+            CommandLineParameters parsed = parse(MainWindow.buildConversionArguments("chrome", "portrait", "", mode[0], "", "", true, null, false, false));
             assertEquals(mode[1], parsed.getBrowserDownload());
         }
     }
 
     @Test
     public void executableOverrideSuppressesBrowserAcquisitionArguments() {
-        List<String> args = MainWindow.buildConversionArguments("chrome", "portrait", "/opt/Chrome Browser/chrome", "force", "/tmp/browser cache", true, null, false, false);
+        List<String> args = MainWindow.buildConversionArguments("chrome", "portrait", "/opt/Chrome Browser/chrome", "force", "/tmp/browser cache", "", true, null, false, false);
         CommandLineParameters parsed = parse(args);
 
         assertEquals("/opt/Chrome Browser/chrome", parsed.getRendererExecutable());
@@ -69,7 +69,7 @@ public class MainWindowArgumentsTest {
 
     @Test
     public void wkhtmltopdfOmitsChromeBrowserArguments() {
-        List<String> args = MainWindow.buildConversionArguments("wkhtmltopdf", "portrait", "", "force", "/tmp/browser cache", true, null, false, false);
+        List<String> args = MainWindow.buildConversionArguments("wkhtmltopdf", "portrait", "", "force", "/tmp/browser cache", "", true, null, false, false);
         CommandLineParameters parsed = parse(args);
 
         assertEquals("wkhtmltopdf", parsed.getRenderer());
@@ -80,19 +80,30 @@ public class MainWindowArgumentsTest {
     }
 
     @Test
+    public void passesCustomStylesheetPathForChromeOnly() {
+        String stylesheet = "/tmp/browser cache/print styles.css";
+        CommandLineParameters parsed = parse(MainWindow.buildConversionArguments("chrome", "portrait", "", "auto", "", stylesheet, true, null, false, false));
+        assertEquals(stylesheet, parsed.getCustomStylesheetPath());
+
+        List<String> wkhtmltopdfArgs = MainWindow.buildConversionArguments("wkhtmltopdf", "portrait", "", "auto", "", stylesheet, true, null, false, false);
+        assertFalse(wkhtmltopdfArgs.contains("--custom-stylesheet-path"));
+        assertNull(parse(wkhtmltopdfArgs).getCustomStylesheetPath());
+    }
+
+    @Test
     public void pathsWithSpacesAndNonAsciiCharactersRoundTrip() {
         String executable = "/tmp/Chromium Browser/ブラウザ";
-        CommandLineParameters parsedExecutable = parse(MainWindow.buildConversionArguments("chrome", "portrait", executable, "auto", "", true, null, false, false));
+        CommandLineParameters parsedExecutable = parse(MainWindow.buildConversionArguments("chrome", "portrait", executable, "auto", "", "", true, null, false, false));
         assertEquals(executable, parsedExecutable.getRendererExecutable());
 
         String cache = "/tmp/browser cache/キャッシュ";
-        CommandLineParameters parsedCache = parse(MainWindow.buildConversionArguments("chrome", "portrait", "", "auto", cache, true, null, false, false));
+        CommandLineParameters parsedCache = parse(MainWindow.buildConversionArguments("chrome", "portrait", "", "auto", cache, "", true, null, false, false));
         assertEquals(cache, parsedCache.getBrowserCacheDir());
     }
 
     @Test
     public void keepsExistingOptions() {
-        List<String> args = MainWindow.buildConversionArguments("chrome", "portrait", "", "auto", "", false, "http://proxy.test:8080", true, true);
+        List<String> args = MainWindow.buildConversionArguments("chrome", "portrait", "", "auto", "", "", false, "http://proxy.test:8080", true, true);
         CommandLineParameters parsed = parse(args);
 
         assertTrue(parsed.isHideHeaders());

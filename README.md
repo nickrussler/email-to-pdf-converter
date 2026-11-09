@@ -64,7 +64,8 @@ Usage: EmailToPDFConverter [options] <email-file>
       Set page orientation: portrait, landscape (default portrait)
       Default: portrait
     --renderer
-      Renderer to use: wkhtmltopdf, chrome (default chrome)
+      Renderer to use: wkhtmltopdf, chrome (default chrome). Chrome blocks
+      local file access.
       Default: chrome
     --renderer-executable
       Path to the wkhtmltopdf or Chrome/Chromium executable.
@@ -129,6 +130,14 @@ java -jar emailconverter.jar --orientation landscape --custom-stylesheet-path la
 ```
 
 The stylesheet is supplied by the caller; orientation alone never injects it. If a surviving page rule prevents landscape output, conversion fails with the landscape validation error.
+
+The Swing GUI exposes the same option as a **Custom stylesheet** field with a CSS file picker.
+
+### Local-file access
+
+Chrome intentionally does not load `file://` resources referenced by email HTML. There is no Chrome opt-in.
+
+The legacy wkhtmltopdf renderer retains its existing `extParams` escape hatch (`--enable-local-file-access`) for backwards compatibility through the public API only. It is not exposed as a CLI option and should be treated as a legacy behavior.
 
 Automatic download supports glibc-based Linux x86-64/ARM64, macOS Intel/Apple Silicon, and Windows x86/x64. It is not available on musl-based Linux (for example Alpine) or Windows ARM64; install Chromium/Chrome or use `--renderer-executable` there.
 
