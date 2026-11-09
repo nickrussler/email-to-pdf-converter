@@ -1,0 +1,78 @@
+name: Page Screenshot
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+    - name: Set up Corretto JDK 8
+      uses: actions/setup-java@v6
+      with:
+        distribution: corretto
+        java-version: '8'
+    - name: Install display support
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes --no-install-recommends xvfb xauth fontconfig fonts-dejavu-core
+    - name: Capture GUI screenshot
+      env:
+        GUI_SCREENSHOT: "1"
+        GUI_SCREENSHOT_PATH: build/screenshots/main-window.png
+      run: |
+        xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" \
+          ./gradlew --no-daemon --max-workers=2 test --tests gui.MainWindowScreenshotTest
+        test -s build/screenshots/main-window.png
+        file build/screenshots/main-window.png | grep -q 'PNG image data'
+    - name: Prepare Pages site
+      run: |
+        mkdir -p _site
+        cp build/screenshots/main-window.png _site/main-window.png
+        cat > _site/index.html <<'HTML'
+        <!doctype html>
+        <html lang="en">
+        <head><meta charset="utf-8"><title>Email to PDF Converter</title></head>
+        <body>
+        <p><img src="main-window.png" alt="Email to PDF Converter GUI"></p>
+        </body>
+        </html>
+        HTML
+    - name: Configure Pages
+      uses: actions/configure-pages@v5
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: _site
+    - name: Verify screenshot is from current main
+      shell: bash
+      run: |
+        git fetch origin main --quiet
+        current="$(git rev-parse HEAD)"
+        main="$(git rev-parse origin/main)"
+        if [ "$current" != "$main" ]; then
+          echo "::error::Screenshot was built from $current, but main is $main. Refusing to deploy."
+          exit 1
+        fi
+    - name: Deploy Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
