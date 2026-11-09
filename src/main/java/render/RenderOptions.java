@@ -61,6 +61,24 @@ public final class RenderOptions {
         }
     }
 
+    public enum Orientation {
+        PORTRAIT, LANDSCAPE;
+
+        public static Orientation fromName(String name) {
+            if (name == null || name.trim().isEmpty() || "portrait".equalsIgnoreCase(name.trim())) {
+                return PORTRAIT;
+            }
+            if ("landscape".equalsIgnoreCase(name.trim())) {
+                return LANDSCAPE;
+            }
+            throw new IllegalArgumentException("Unsupported page orientation: " + name);
+        }
+
+        public String getWkhtmltopdfName() {
+            return this == LANDSCAPE ? "Landscape" : "Portrait";
+        }
+    }
+
     private final Renderer renderer;
     private final String executable;
     private final String proxy;
@@ -70,14 +88,20 @@ public final class RenderOptions {
     private final List<String> extParams;
     private final BrowserDownload browserDownload;
     private final String browserCacheDir;
+    private final Orientation orientation;
 
     public RenderOptions(
                          Renderer renderer, String executable, String proxy, String pageSize, String dpi, boolean javaScriptEnabled, List<String> extParams) {
-        this(renderer, executable, proxy, pageSize, dpi, javaScriptEnabled, extParams, BrowserDownload.AUTO, null);
+        this(renderer, executable, proxy, pageSize, dpi, javaScriptEnabled, extParams, BrowserDownload.AUTO, null, Orientation.PORTRAIT);
     }
 
     public RenderOptions(
                          Renderer renderer, String executable, String proxy, String pageSize, String dpi, boolean javaScriptEnabled, List<String> extParams, BrowserDownload browserDownload, String browserCacheDir) {
+        this(renderer, executable, proxy, pageSize, dpi, javaScriptEnabled, extParams, browserDownload, browserCacheDir, Orientation.PORTRAIT);
+    }
+
+    public RenderOptions(
+                         Renderer renderer, String executable, String proxy, String pageSize, String dpi, boolean javaScriptEnabled, List<String> extParams, BrowserDownload browserDownload, String browserCacheDir, Orientation orientation) {
         this.renderer = renderer;
         this.executable = executable;
         this.proxy = proxy;
@@ -87,6 +111,7 @@ public final class RenderOptions {
         this.extParams = extParams == null ? Collections.emptyList() : Collections.unmodifiableList(new ArrayList<>(extParams));
         this.browserDownload = browserDownload == null ? BrowserDownload.AUTO : browserDownload;
         this.browserCacheDir = browserCacheDir;
+        this.orientation = orientation == null ? Orientation.PORTRAIT : orientation;
     }
 
     /**
@@ -130,5 +155,9 @@ public final class RenderOptions {
 
     public String getBrowserCacheDir() {
         return browserCacheDir;
+    }
+
+    public Orientation getOrientation() {
+        return orientation;
     }
 }

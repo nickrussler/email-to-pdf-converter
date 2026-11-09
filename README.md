@@ -60,6 +60,9 @@ Usage: EmailToPDFConverter [options] <email-file>
     -r, --dpi
       Set wkhtmltopdf DPI. Ignored by the Chrome renderer. (default 300)
       Default: 300
+    -O, --orientation
+      Set page orientation: portrait, landscape (default portrait)
+      Default: portrait
     --renderer
       Renderer to use: wkhtmltopdf, chrome (default chrome)
       Default: chrome
@@ -99,6 +102,8 @@ With the Chrome renderer (the default), browser selection works as follows:
 * `force` downloads the current Stable headless shell even when that version is already cached and replaces the cached copy after successful extraction.
 
 Downloaded shells are cached per version and platform. Use `--browser-cache-dir` to change the cache location. `auto`, `never`, and `once` can reuse a cached shell without a metadata request.
+
+Use `--orientation landscape` for landscape output. Chrome handles complex Word-generated tables more reliably; the legacy wkhtmltopdf renderer may still overlap table text in landscape.
 
 Automatic download supports glibc-based Linux x86-64/ARM64, macOS Intel/Apple Silicon, and Windows x86/x64. It is not available on musl-based Linux (for example Alpine) or Windows ARM64; install Chromium/Chrome or use `--renderer-executable` there.
 

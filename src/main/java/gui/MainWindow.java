@@ -51,6 +51,7 @@ public class MainWindow {
     private JProgressBar progressBar;
     private JButton btnStartConversion;
     private JComboBox<String> rendererComboBox;
+    private JComboBox<String> orientationComboBox;
     private JTextField executableField;
     private JComboBox<String> browserDownloadComboBox;
     private JTextField browserCacheField;
@@ -106,7 +107,7 @@ public class MainWindow {
         JPanel contentPanel = new JPanel();
         contentPanel.setBackground(Color.WHITE);
         contentPanel.setLayout(null);
-        contentPanel.setPreferredSize(new Dimension(700, 820));
+        contentPanel.setPreferredSize(new Dimension(700, 850));
 
         JScrollPane contentScrollPane = new JScrollPane(contentPanel);
         contentScrollPane.setBorder(null);
@@ -210,7 +211,7 @@ public class MainWindow {
         JPanel panel = new JPanel();
         panel.setBorder(new TitledBorder(null, "Options", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         panel.setBackground(Color.WHITE);
-        panel.setBounds(10, 232, 664, 248);
+        panel.setBounds(10, 232, 664, 276);
         contentPanel.add(panel);
         panel.setLayout(null);
 
@@ -232,18 +233,30 @@ public class MainWindow {
         rendererComboBox.setToolTipText("Choose the HTML-to-PDF renderer. Chrome is the default.");
         panel.add(rendererComboBox);
 
+        JLabel lblOrientation = new JLabel("Orientation:");
+        lblOrientation.setBounds(220, 47, 80, 20);
+        panel.add(lblOrientation);
+
+        orientationComboBox = new JComboBox<String>(new String[]{"Portrait", "Landscape"});
+        orientationComboBox.setName("orientationComboBox");
+        orientationComboBox.setSelectedItem("Portrait");
+        orientationComboBox.setBackground(Color.WHITE);
+        orientationComboBox.setBounds(300, 44, 120, 26);
+        orientationComboBox.setToolTipText("Page orientation. Landscape is best supported by the Chrome renderer.");
+        panel.add(orientationComboBox);
+
         JLabel lblExecutable = new JLabel("Executable:");
-        lblExecutable.setBounds(220, 47, 75, 20);
+        lblExecutable.setBounds(10, 75, 75, 20);
         panel.add(lblExecutable);
 
         executableField = new JTextField();
         executableField.setName("executableField");
-        executableField.setBounds(298, 44, 240, 26);
+        executableField.setBounds(90, 72, 475, 26);
         executableField.setToolTipText("Optional renderer executable path. Leave blank for automatic selection.");
         panel.add(executableField);
 
         JButton btnBrowseExecutable = new JButton("Browse");
-        btnBrowseExecutable.setBounds(545, 42, 100, 30);
+        btnBrowseExecutable.setBounds(572, 70, 82, 30);
         btnBrowseExecutable.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -260,13 +273,13 @@ public class MainWindow {
         executableHint = new JLabel("Automatic when blank");
         executableHint.setFont(new Font("Tahoma", Font.PLAIN, 11));
         executableHint.setForeground(Color.GRAY);
-        executableHint.setBounds(298, 71, 240, 18);
+        executableHint.setBounds(90, 99, 475, 18);
         panel.add(executableHint);
 
         JPanel browserPanel = new JPanel();
         browserPanel.setBorder(new TitledBorder(null, "Chrome Browser", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         browserPanel.setBackground(Color.WHITE);
-        browserPanel.setBounds(10, 92, 644, 90);
+        browserPanel.setBounds(10, 120, 644, 90);
         browserPanel.setLayout(null);
         panel.add(browserPanel);
 
@@ -325,19 +338,19 @@ public class MainWindow {
             }
         });
         chckbxUseProxy.setBackground(Color.WHITE);
-        chckbxUseProxy.setBounds(10, 191, 86, 23);
+        chckbxUseProxy.setBounds(10, 219, 86, 23);
         panel.add(chckbxUseProxy);
 
         rdbtnAutomaticProxySelection = new JRadioButton("Automatic Proxy Selection");
         rdbtnAutomaticProxySelection.setSelected(true);
         rdbtnAutomaticProxySelection.setEnabled(false);
         rdbtnAutomaticProxySelection.setBackground(Color.WHITE);
-        rdbtnAutomaticProxySelection.setBounds(98, 191, 180, 23);
+        rdbtnAutomaticProxySelection.setBounds(98, 219, 180, 23);
         panel.add(rdbtnAutomaticProxySelection);
 
         textField = new JTextField();
         textField.setEnabled(false);
-        textField.setBounds(352, 192, 290, 22);
+        textField.setBounds(352, 220, 290, 22);
         panel.add(textField);
         textField.setColumns(10);
 
@@ -350,7 +363,7 @@ public class MainWindow {
         });
         rdbtnManual.setEnabled(false);
         rdbtnManual.setBackground(Color.WHITE);
-        rdbtnManual.setBounds(280, 191, 66, 23);
+        rdbtnManual.setBounds(280, 219, 66, 23);
         panel.add(rdbtnManual);
 
         ButtonGroup bg = new ButtonGroup();
@@ -359,12 +372,12 @@ public class MainWindow {
 
         final JCheckBox chckbxExtractAttachments = new JCheckBox("Extract Attachments");
         chckbxExtractAttachments.setBackground(Color.WHITE);
-        chckbxExtractAttachments.setBounds(10, 218, 150, 23);
+        chckbxExtractAttachments.setBounds(10, 246, 150, 23);
         panel.add(chckbxExtractAttachments);
 
         final JCheckBox chckbxAddAttachmentNames = new JCheckBox("Add Attachment Names");
         chckbxAddAttachmentNames.setBackground(Color.WHITE);
-        chckbxAddAttachmentNames.setBounds(160, 218, 180, 23);
+        chckbxAddAttachmentNames.setBounds(160, 246, 180, 23);
         panel.add(chckbxAddAttachmentNames);
 
         rendererComboBox.addActionListener(new ActionListener() {
@@ -405,7 +418,7 @@ public class MainWindow {
         JPanel panelProgress = new JPanel();
         panelProgress.setBorder(new TitledBorder(null, "", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         panelProgress.setBackground(Color.WHITE);
-        panelProgress.setBounds(10, 488, 664, 127);
+        panelProgress.setBounds(10, 516, 664, 127);
         contentPanel.add(panelProgress);
         panelProgress.setLayout(null);
 
@@ -429,6 +442,7 @@ public class MainWindow {
 
                 final String proxy = proxyTmp;
                 final String renderer = selectedRenderer();
+                final String orientation = selectedOrientation();
                 final String executable = executableField.getText();
                 final String browserDownload = selectedBrowserDownload();
                 final String browserCacheDir = browserCacheField.getText();
@@ -436,7 +450,7 @@ public class MainWindow {
                     @Override
                     public void run() {
                         startConversion(
-                                Collections.list(listModel.elements()), renderer, executable, browserDownload, browserCacheDir, chckbxAddEmailHeaders.isSelected(), proxy, chckbxAddAttachmentNames.isSelected(), chckbxExtractAttachments.isSelected());
+                                Collections.list(listModel.elements()), renderer, orientation, executable, browserDownload, browserCacheDir, chckbxAddEmailHeaders.isSelected(), proxy, chckbxAddAttachmentNames.isSelected(), chckbxExtractAttachments.isSelected());
                     }
                 }).start();
             }
@@ -467,7 +481,7 @@ public class MainWindow {
         contentPanel.add(btnRemoveSelectedFrom);
 
         JScrollPane scrollPaneLog = new JScrollPane();
-        scrollPaneLog.setBounds(10, 626, 664, 183);
+        scrollPaneLog.setBounds(10, 654, 664, 183);
         scrollPaneLog.setBorder(new TitledBorder(null, "Log", TitledBorder.LEADING, TitledBorder.TOP, null, null));
         scrollPaneLog.setBackground(Color.WHITE);
         contentPanel.add(scrollPaneLog);
@@ -542,6 +556,11 @@ public class MainWindow {
         return isChromeSelected() ? "chrome" : "wkhtmltopdf";
     }
 
+    private String selectedOrientation() {
+        Object selected = orientationComboBox == null ? "Portrait" : orientationComboBox.getSelectedItem();
+        return String.valueOf(selected).toLowerCase(Locale.ROOT);
+    }
+
     private String selectedBrowserDownload() {
         Object selected = browserDownloadComboBox == null ? "Auto" : browserDownloadComboBox.getSelectedItem();
         return String.valueOf(selected).toLowerCase(Locale.ROOT);
@@ -568,7 +587,7 @@ public class MainWindow {
     }
 
     static List<String> buildConversionArguments(
-                                                 String renderer, String executable, String browserDownload, String browserCacheDir, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
+                                                 String renderer, String orientation, String executable, String browserDownload, String browserCacheDir, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
         List<String> args = new ArrayList<String>();
 
         if (!showHeaders) {
@@ -591,6 +610,8 @@ public class MainWindow {
         String rendererName = "wkhtmltopdf".equalsIgnoreCase(renderer) ? "wkhtmltopdf" : "chrome";
         args.add("--renderer");
         args.add(rendererName);
+        args.add("--orientation");
+        args.add("landscape".equalsIgnoreCase(orientation) ? "landscape" : "portrait");
 
         if (!isBlank(executable)) {
             args.add("--renderer-executable");
@@ -613,10 +634,10 @@ public class MainWindow {
      * Start converting the email files.
      */
     private void startConversion(
-                                 List<String> l, String renderer, String executable, String browserDownload, String browserCacheDir, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
+                                 List<String> l, String renderer, String orientation, String executable, String browserDownload, String browserCacheDir, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
         try {
             ArrayList<String> argsOptions = new ArrayList<String>(
-                    buildConversionArguments(renderer, executable, browserDownload, browserCacheDir, showHeaders, proxy, addAttachmentNames, extractAttachments));
+                    buildConversionArguments(renderer, orientation, executable, browserDownload, browserCacheDir, showHeaders, proxy, addAttachmentNames, extractAttachments));
 
             int listSize = l.size();
             for (int i = 0; i < listSize; i++) {

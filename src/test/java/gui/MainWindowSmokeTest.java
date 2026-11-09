@@ -59,9 +59,14 @@ public class MainWindowSmokeTest {
             assertNotNull(renderer);
             assertEquals("Chrome", renderer.getSelectedItem());
             assertTrue(hasLabel(frame[0].getContentPane(), "Renderer:"));
+            assertTrue(hasLabel(frame[0].getContentPane(), "Orientation:"));
             assertTrue(hasLabel(frame[0].getContentPane(), "Executable:"));
             assertTrue(hasLabel(frame[0].getContentPane(), "Download mode:"));
             assertTrue(hasLabel(frame[0].getContentPane(), "Cache directory:"));
+
+            JComboBox<?> orientation = comboWithItem(frame[0].getContentPane(), "Landscape");
+            assertNotNull(orientation);
+            assertEquals("Portrait", orientation.getSelectedItem());
 
             final JComboBox<?> browserDownload = comboWithItem(frame[0].getContentPane(), "Force");
             assertNotNull(browserDownload);

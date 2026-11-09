@@ -194,6 +194,23 @@ public class RendererE2ETest {
     }
 
     @Test
+    public void rendersLandscapeOrientation() throws Exception {
+        File workDir = temporaryFolder.newFolder();
+        String bodyMarker = "LANDSCAPE_MARKER";
+        File eml = writeHtmlEml(
+                workDir, "landscape.eml", "Landscape", "<html><head><style>@page WordSection1 { size:8.5in 11.0in; }</style></head><body><p>" + bodyMarker + "</p></body></html>");
+        File output = new File(workDir, "landscape.pdf");
+
+        runMain(
+                "--renderer", rendererName(), "--orientation", "landscape", "-o", output.getAbsolutePath(), "-hh", eml.getAbsolutePath());
+
+        try (PDDocument document = Loader.loadPDF(output)) {
+            assertPageSize(document, PaperSize.fromName("A4"), RenderOptions.Orientation.LANDSCAPE);
+            assertThat(normalizedText(document), containsString(bodyMarker));
+        }
+    }
+
+    @Test
     public void rendersEverySupportedPageSize() throws Exception {
         File workDir = temporaryFolder.newFolder();
         for (PaperSize paperSize : PaperSize.all()) {
@@ -255,8 +272,14 @@ public class RendererE2ETest {
     }
 
     private static void assertPageSize(PDDocument document, PaperSize paperSize) {
-        assertEquals(paperSize.getWidthPoints(), document.getPage(0).getMediaBox().getWidth(), 1.0f);
-        assertEquals(paperSize.getHeightPoints(), document.getPage(0).getMediaBox().getHeight(), 1.0f);
+        assertPageSize(document, paperSize, RenderOptions.Orientation.PORTRAIT);
+    }
+
+    private static void assertPageSize(PDDocument document, PaperSize paperSize, RenderOptions.Orientation orientation) {
+        double expectedWidth = orientation == RenderOptions.Orientation.LANDSCAPE ? paperSize.getHeightPoints() : paperSize.getWidthPoints();
+        double expectedHeight = orientation == RenderOptions.Orientation.LANDSCAPE ? paperSize.getWidthPoints() : paperSize.getHeightPoints();
+        assertEquals(expectedWidth, document.getPage(0).getMediaBox().getWidth(), 1.0f);
+        assertEquals(expectedHeight, document.getPage(0).getMediaBox().getHeight(), 1.0f);
     }
 
     private static String normalizedText(PDDocument document) throws IOException {

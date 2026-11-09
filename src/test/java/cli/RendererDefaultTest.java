@@ -28,6 +28,11 @@ public class RendererDefaultTest {
     }
 
     @Test
+    public void commandLineDefaultsToPortrait() {
+        assertEquals("portrait", new CommandLineParameters().getOrientation());
+    }
+
+    @Test
     public void rendererNameDefaultsToChromeAndKeepsWkhtmltopdfSelectable() {
         assertEquals(RenderOptions.Renderer.CHROME, RenderOptions.Renderer.fromName(null));
         assertEquals(RenderOptions.Renderer.CHROME, RenderOptions.Renderer.fromName(""));
