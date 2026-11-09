@@ -20,9 +20,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
-import java.awt.Rectangle;
-import java.awt.Robot;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -47,22 +46,26 @@ public class MainWindowScreenshotTest {
         final String outputPath = screenshotPath();
 
         try {
+            MainWindow.main(new String[0]);
+            waitUntilFrameCreated(frame);
+            assertNotNull("Main window was not created", frame[0]);
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
-                    new MainWindow();
-                    frame[0] = findMainFrame();
-                    if (frame[0] != null) {
-                        frame[0].setVisible(true);
-                    }
+                    frame[0].pack();
                 }
             });
-            assertNotNull("Main window was not created", frame[0]);
             waitUntilVisible(frame[0]);
 
             Thread.sleep(500);
-            Rectangle bounds = frame[0].getBounds();
-            BufferedImage screenshot = new Robot().createScreenCapture(bounds);
+            BufferedImage screenshot = new BufferedImage(
+                    frame[0].getWidth(), frame[0].getHeight(), BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = screenshot.createGraphics();
+            try {
+                frame[0].paintAll(graphics);
+            } finally {
+                graphics.dispose();
+            }
 
             File output = new File(outputPath);
             File parent = output.getParentFile();
@@ -92,6 +95,23 @@ public class MainWindowScreenshotTest {
     private static String screenshotPath() {
         String path = System.getenv("GUI_SCREENSHOT_PATH");
         return path == null || path.trim().isEmpty() ? "build/screenshots/main-window.png" : path;
+    }
+
+    private static void waitUntilFrameCreated(final JFrame[] frame) throws Exception {
+        long deadline = System.currentTimeMillis() + VISIBLE_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    frame[0] = findMainFrame();
+                }
+            });
+            if (frame[0] != null) {
+                return;
+            }
+            Thread.sleep(50);
+        }
+        fail("Main window was not created within " + VISIBLE_TIMEOUT_MS + "ms");
     }
 
     private static void waitUntilVisible(final JFrame frame) throws Exception {
