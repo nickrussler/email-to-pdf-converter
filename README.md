@@ -23,7 +23,7 @@ There you can find a Windows setup.exe and a jar.<br>
 If you want to use the jar (e.g. for a non Windows OS), install Chrome/Chromium/Edge or allow the converter to download a Chrome headless shell. To use the legacy renderer, put the [wkhtmltopdf](http://wkhtmltopdf.org/) binary in the PATH and pass `--renderer wkhtmltopdf`.
 
 ### Screenshot
-<img src="https://www.whitebyte.info/wp-content/uploads/2015/02/scr1.png" />
+<img src="https://nickrussler.github.io/email-to-pdf-converter/main-window.png" alt="Email to PDF Converter GUI" />
 
 ### Commandline Interface
 ```
