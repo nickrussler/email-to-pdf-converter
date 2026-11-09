@@ -20,14 +20,23 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.awt.Graphics2D;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.GraphicsEnvironment;
+import java.awt.Robot;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import javax.imageio.ImageIO;
+import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.SwingUtilities;
 import org.junit.Assume;
 import org.junit.Test;
@@ -46,26 +55,27 @@ public class MainWindowScreenshotTest {
         final String outputPath = screenshotPath();
 
         try {
+            String[] demoEmails = prepareDemoEmails();
             MainWindow.main(new String[0]);
             waitUntilFrameCreated(frame);
             assertNotNull("Main window was not created", frame[0]);
-            SwingUtilities.invokeAndWait(new Runnable() {
-                @Override
-                public void run() {
-                    frame[0].pack();
+            SwingUtilities.invokeAndWait(() -> {
+                JList<?> emailList = findEmailList(frame[0]);
+                assertNotNull("Email file list was not found", emailList);
+                @SuppressWarnings("unchecked") DefaultListModel<String> model = (DefaultListModel<String>) emailList.getModel();
+                for (String demoEmail : demoEmails) {
+                    model.addElement(demoEmail);
                 }
+                frame[0].setAlwaysOnTop(true);
+                frame[0].toFront();
             });
             waitUntilVisible(frame[0]);
 
-            Thread.sleep(500);
-            BufferedImage screenshot = new BufferedImage(
-                    frame[0].getWidth(), frame[0].getHeight(), BufferedImage.TYPE_INT_RGB);
-            Graphics2D graphics = screenshot.createGraphics();
-            try {
-                frame[0].paintAll(graphics);
-            } finally {
-                graphics.dispose();
-            }
+            Robot robot = new Robot(frame[0].getGraphicsConfiguration().getDevice());
+            robot.waitForIdle();
+            robot.delay(500);
+            // The OS draws the title bar, so capture the visible window from the desktop.
+            BufferedImage screenshot = robot.createScreenCapture(frame[0].getBounds());
 
             File output = new File(outputPath);
             File parent = output.getParentFile();
@@ -90,6 +100,28 @@ public class MainWindowScreenshotTest {
             System.setOut(originalOut);
             System.setErr(originalErr);
         }
+    }
+
+    private static String[] prepareDemoEmails() throws IOException {
+        Path fixtures = Paths.get("src", "test", "resources");
+        Path demo = Files.createDirectories(Paths.get("build", "Demo Emails"));
+        return new String[]{Files.copy(fixtures.resolve("eml/testPlain.eml"), demo.resolve("Order confirmation.eml"), StandardCopyOption.REPLACE_EXISTING).toString(), Files.copy(fixtures.resolve("eml/testAttachments.eml"), demo.resolve("Invoice with attachments.eml"), StandardCopyOption.REPLACE_EXISTING).toString(), Files.copy(fixtures.resolve("msg/testHtml.msg"), demo.resolve("Outlook message.msg"), StandardCopyOption.REPLACE_EXISTING).toString()
+        };
+    }
+
+    private static JList<?> findEmailList(Container root) {
+        for (Component child : root.getComponents()) {
+            if (child instanceof JList<?>) {
+                return (JList<?>) child;
+            }
+            if (child instanceof Container) {
+                JList<?> list = findEmailList((Container) child);
+                if (list != null) {
+                    return list;
+                }
+            }
+        }
+        return null;
     }
 
     private static String screenshotPath() {
