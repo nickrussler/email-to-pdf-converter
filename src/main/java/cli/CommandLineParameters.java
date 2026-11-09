@@ -90,7 +90,7 @@ public class CommandLineParameters {
     private String orientation = "portrait";
 
     @Parameter(
-            names = {"--renderer"}, description = "Renderer to use: wkhtmltopdf, chrome (default chrome)")
+            names = {"--renderer"}, description = "Renderer to use: wkhtmltopdf, chrome (default chrome). Chrome blocks local file access.")
     private String renderer = "chrome";
 
     @Parameter(
