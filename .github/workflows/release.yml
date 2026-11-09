@@ -28,9 +28,9 @@ jobs:
         $ErrorActionPreference = 'Stop'
 
         $launch4jInstaller = Join-Path $env:RUNNER_TEMP 'launch4j.exe'
-        Invoke-WebRequest `
-          -Uri 'https://sourceforge.net/projects/launch4j/files/launch4j-3/3.50/launch4j-3.50-win32.exe/download' `
-          -OutFile $launch4jInstaller
+        curl.exe --fail --location --retry 3 `
+          --output $launch4jInstaller `
+          'https://downloads.sourceforge.net/project/launch4j/launch4j-3/3.50/launch4j-3.50-win32.exe'
         $launch4jHash = (Get-FileHash $launch4jInstaller -Algorithm SHA256).Hash
         if ($launch4jHash -ne 'A7A1E32A295FE3D501FA623D6986FF0FEBd60d770223D699E01735666128B5F0') {
           throw "Unexpected Launch4j installer hash: $launch4jHash"
@@ -49,9 +49,9 @@ jobs:
         }
 
         $innoInstaller = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
-        Invoke-WebRequest `
-          -Uri 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_4/innosetup-6.7.4.exe' `
-          -OutFile $innoInstaller
+        curl.exe --fail --location --retry 3 `
+          --output $innoInstaller `
+          'https://github.com/jrsoftware/issrc/releases/download/is-6_7_4/innosetup-6.7.4.exe'
         $innoHash = (Get-FileHash $innoInstaller -Algorithm SHA256).Hash
         if ($innoHash -ne 'A549929319F9120716677C685535CA4671E4B937B5FDC87E2585F32D8EB30E8C') {
           throw "Unexpected Inno Setup installer hash: $innoHash"
