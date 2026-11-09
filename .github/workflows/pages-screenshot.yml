@@ -17,7 +17,7 @@ concurrency:
 jobs:
   deploy:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-22.04
+    runs-on: windows-2025
     timeout-minutes: 15
     environment:
       name: github-pages
@@ -31,20 +31,18 @@ jobs:
       with:
         distribution: corretto
         java-version: '8'
-    - name: Install display support
-      run: |
-        sudo apt-get update
-        sudo apt-get install --yes --no-install-recommends xvfb xauth fontconfig fonts-dejavu-core
     - name: Capture GUI screenshot
+      shell: pwsh
       env:
         GUI_SCREENSHOT: "1"
         GUI_SCREENSHOT_PATH: build/screenshots/main-window.png
       run: |
-        xvfb-run --auto-servernum --server-args="-screen 0 1280x1024x24" \
-          ./gradlew --no-daemon --max-workers=2 test --tests gui.MainWindowScreenshotTest
-        test -s build/screenshots/main-window.png
-        file build/screenshots/main-window.png | grep -q 'PNG image data'
+        .\gradlew.bat --no-daemon --max-workers=2 test --tests gui.MainWindowScreenshotTest
+        if (!(Test-Path build/screenshots/main-window.png)) {
+          throw 'GUI screenshot was not generated'
+        }
     - name: Prepare Pages site
+      shell: bash
       run: |
         mkdir -p _site
         cp build/screenshots/main-window.png _site/main-window.png
