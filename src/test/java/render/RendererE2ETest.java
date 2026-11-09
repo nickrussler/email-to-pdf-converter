@@ -198,7 +198,7 @@ public class RendererE2ETest {
         File workDir = temporaryFolder.newFolder();
         String bodyMarker = "LANDSCAPE_MARKER";
         File eml = writeHtmlEml(
-                workDir, "landscape.eml", "Landscape", "<html><head><style>@page WordSection1 { size:8.5in 11.0in; }</style></head><body><p>" + bodyMarker + "</p></body></html>");
+                workDir, "landscape.eml", "Landscape", "<html><body><p>" + bodyMarker + "</p></body></html>");
         File output = new File(workDir, "landscape.pdf");
 
         runMain(
@@ -207,6 +207,23 @@ public class RendererE2ETest {
         try (PDDocument document = Loader.loadPDF(output)) {
             assertPageSize(document, PaperSize.fromName("A4"), RenderOptions.Orientation.LANDSCAPE);
             assertThat(normalizedText(document), containsString(bodyMarker));
+        }
+    }
+
+    @Test
+    public void preservesLiteralCssPageExamples() throws Exception {
+        File workDir = temporaryFolder.newFolder();
+        String literalCss = "@page { size: auto !important; }";
+        File eml = writeHtmlEml(
+                workDir, "literal-css.eml", "Literal CSS", "<html><body><p>" + literalCss + "</p></body></html>");
+        File output = new File(workDir, "literal-css.pdf");
+
+        runMain("--renderer", rendererName(), "-o", output.getAbsolutePath(), "-hh", eml.getAbsolutePath());
+
+        try (PDDocument document = Loader.loadPDF(output)) {
+            String text = normalizedText(document);
+            assertThat(text, containsString("@page"));
+            assertThat(text, containsString("size: auto !important;"));
         }
     }
 

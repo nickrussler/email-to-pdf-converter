@@ -103,7 +103,7 @@ With the Chrome renderer (the default), browser selection works as follows:
 
 Downloaded shells are cached per version and platform. Use `--browser-cache-dir` to change the cache location. `auto`, `never`, and `once` can reuse a cached shell without a metadata request.
 
-Use `--orientation landscape` for landscape output. Chrome handles complex Word-generated tables more reliably; the legacy wkhtmltopdf renderer may still overlap table text in landscape.
+Use `--orientation landscape` for landscape output. Chrome honors orientation declarations in the email's print CSS; if the final PDF is portrait, conversion fails with a clear error instead of writing a mismatched document. The legacy wkhtmltopdf renderer may still overlap complex table text in landscape.
 
 Automatic download supports glibc-based Linux x86-64/ARM64, macOS Intel/Apple Silicon, and Windows x86/x64. It is not available on musl-based Linux (for example Alpine) or Windows ARM64; install Chromium/Chrome or use `--renderer-executable` there.
 
