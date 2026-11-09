@@ -38,6 +38,13 @@ import util.ProxyUrl;
  * @author Nick Russler
  */
 public class Main {
+    static String stripLeadingBom(String value) {
+        if (value != null && !value.isEmpty() && value.charAt(0) == '\uFEFF') {
+            return value.substring(1);
+        }
+        return value;
+    }
+
     public static void main(String[] args) {
         CommandLineParameters cli = new CommandLineParameters();
         JCommander jCmd = new JCommander(cli);
@@ -130,7 +137,7 @@ public class Main {
                 return;
             }
             try {
-                printStylesheet = Files.asCharSource(new File(cli.getStylesheet()), StandardCharsets.UTF_8).read();
+                printStylesheet = stripLeadingBom(Files.asCharSource(new File(cli.getStylesheet()), StandardCharsets.UTF_8).read());
             } catch (IOException e) {
                 Logger.error("Could not read stylesheet %s: %s", cli.getStylesheet(), e.getMessage());
                 return;
