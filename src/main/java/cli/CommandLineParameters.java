@@ -86,6 +86,10 @@ public class CommandLineParameters {
     private String dpi = "300";
 
     @Parameter(
+            names = {"-O", "--orientation"}, description = "Set page orientation: portrait, landscape (default portrait)")
+    private String orientation = "portrait";
+
+    @Parameter(
             names = {"--renderer"}, description = "Renderer to use: wkhtmltopdf, chrome (default chrome)")
     private String renderer = "chrome";
 
@@ -223,6 +227,14 @@ public class CommandLineParameters {
 
     public void setDPI(String dpi) {
         this.dpi = dpi;
+    }
+
+    public String getOrientation() {
+        return orientation;
+    }
+
+    public void setOrientation(String orientation) {
+        this.orientation = orientation;
     }
 
     public String getRenderer() {

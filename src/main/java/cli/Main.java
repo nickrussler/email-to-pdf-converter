@@ -111,16 +111,18 @@ public class Main {
 
         RenderOptions.Renderer renderer;
         RenderOptions.BrowserDownload browserDownload;
+        RenderOptions.Orientation orientation;
         try {
             renderer = RenderOptions.Renderer.fromName(cli.getRenderer());
             browserDownload = RenderOptions.BrowserDownload.fromName(cli.getBrowserDownload());
+            orientation = RenderOptions.Orientation.fromName(cli.getOrientation());
         } catch (IllegalArgumentException e) {
             Logger.error("%s", e.getMessage());
             return;
         }
 
         RenderOptions renderOptions = new RenderOptions(
-                renderer, cli.getRendererExecutable(), proxy, cli.getPageSize(), cli.getDPI(), cli.isDangerousEnableJavaScript(), null, browserDownload, cli.getBrowserCacheDir());
+                renderer, cli.getRendererExecutable(), proxy, cli.getPageSize(), cli.getDPI(), cli.isDangerousEnableJavaScript(), null, browserDownload, cli.getBrowserCacheDir(), orientation);
 
         try {
             MimeMessageConverter.convertToPdf(

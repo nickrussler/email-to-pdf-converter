@@ -46,6 +46,10 @@ public final class WkhtmltopdfRenderer implements PdfRenderer {
 
     @Override
     public void render(String html, Charset charset, File outputPdf) throws Exception {
+        if (options.getOrientation() == RenderOptions.Orientation.LANDSCAPE) {
+            Logger.info("wkhtmltopdf landscape rendering is unreliable for complex HTML tables; use --renderer chrome if the output overlaps.");
+        }
+
         File tmpHtml = File.createTempFile("emailtopdf", ".html");
         try {
             Logger.debug("Write html to temporary file %s", tmpHtml.getAbsolutePath());
@@ -56,6 +60,7 @@ public final class WkhtmltopdfRenderer implements PdfRenderer {
 
             addOption(cmd, "--proxy", options.getProxy());
             addOption(cmd, "--page-size", options.getPageSize());
+            addOption(cmd, "--orientation", options.getOrientation().getWkhtmltopdfName());
             addOption(cmd, "--dpi", options.getDpi());
             cmd.addAll(options.getExtParams());
 

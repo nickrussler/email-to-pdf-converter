@@ -39,6 +39,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import mimeparser.PdfContentHeightMeasurer;
 import render.PaperSize;
@@ -58,6 +60,8 @@ public final class ChromeRenderer implements PdfRenderer {
     private static final double CSS_PX_PER_INCH = 96.0;
     private static final double MM_PER_INCH = 25.4;
     private static final double PRINT_MARGIN_MM = 10.0;
+    private static final Pattern CSS_PAGE_RULE = Pattern.compile("(?is)(@page\\b[^{]*\\{)([^{}]*)(\\})");
+    private static final Pattern CSS_PAGE_SIZE = Pattern.compile("(?i)\\bsize\\s*:[^;}]+;?");
 
     private final RenderOptions options;
     private volatile ChromeBrowserProvisioner.Browser resolvedBrowser;
@@ -72,7 +76,7 @@ public final class ChromeRenderer implements PdfRenderer {
         logUnsupportedOptions();
 
         PaperSize paperSize = PaperSize.fromName(options.getPageSize());
-        renderHtml(html, outputPdf, paperSize.getWidthPoints(), paperSize.getHeightPoints(), PRINT_MARGIN_MM, true);
+        renderHtml(html, outputPdf, paperSize.getWidthPoints(), paperSize.getHeightPoints(), PRINT_MARGIN_MM, true, options.getOrientation() == RenderOptions.Orientation.LANDSCAPE);
     }
 
     @Override
@@ -82,7 +86,7 @@ public final class ChromeRenderer implements PdfRenderer {
             tmpProbe = File.createTempFile("emailtopdf-header-probe", ".pdf");
             double widthPoints = widthPx * 72.0 / CSS_PX_PER_INCH;
             double heightPoints = HEADER_PROBE_PAGE_HEIGHT_PX * 72.0 / CSS_PX_PER_INCH;
-            renderHtml(headerHtml, tmpProbe, widthPoints, heightPoints, 0, false);
+            renderHtml(headerHtml, tmpProbe, widthPoints, heightPoints, 0, false, false);
 
             int measuredHeight = PdfContentHeightMeasurer.measureContentHeightPx(tmpProbe, widthPx);
             return Math.max(measuredHeight, HEADER_MIN_HEIGHT);
@@ -94,7 +98,7 @@ public final class ChromeRenderer implements PdfRenderer {
         }
     }
 
-    private void renderHtml(String html, File outputPdf, double widthPoints, double heightPoints, double marginMm, boolean printBackground) throws Exception {
+    private void renderHtml(String html, File outputPdf, double widthPoints, double heightPoints, double marginMm, boolean printBackground, boolean landscape) throws Exception {
         String chromeProxy = ProxyUrl.normalizeForChrome(options.getProxy());
         ChromeBrowserProvisioner.Browser browserInfo = resolveBrowser();
         String executable = browserInfo.getExecutable();
@@ -149,7 +153,7 @@ public final class ChromeRenderer implements PdfRenderer {
             String frameId = frameTree.getAsJsonObject("frameTree").getAsJsonObject("frame").get("id").getAsString();
             JsonObject document = new JsonObject();
             document.addProperty("frameId", frameId);
-            document.addProperty("html", html);
+            document.addProperty("html", stripCssPageSize(html));
             cdp.sendCommand("Page.setDocumentContent", document);
             cdp.awaitLoad();
 
@@ -157,6 +161,7 @@ public final class ChromeRenderer implements PdfRenderer {
             pdfOptions.addProperty("printBackground", printBackground);
             pdfOptions.addProperty("preferCSSPageSize", false);
             pdfOptions.addProperty("displayHeaderFooter", false);
+            pdfOptions.addProperty("landscape", landscape);
             pdfOptions.addProperty("paperWidth", widthPoints / 72.0);
             pdfOptions.addProperty("paperHeight", heightPoints / 72.0);
             pdfOptions.addProperty("marginTop", marginMm / MM_PER_INCH);
@@ -182,6 +187,17 @@ public final class ChromeRenderer implements PdfRenderer {
             deleteRecursively(userDataDir);
             deleteTempFile(browserLog);
         }
+    }
+
+    static String stripCssPageSize(String html) {
+        Matcher rules = CSS_PAGE_RULE.matcher(html);
+        StringBuffer withoutSize = new StringBuffer();
+        while (rules.find()) {
+            String body = CSS_PAGE_SIZE.matcher(rules.group(2)).replaceAll("");
+            rules.appendReplacement(withoutSize, Matcher.quoteReplacement(rules.group(1) + body + rules.group(3)));
+        }
+        rules.appendTail(withoutSize);
+        return withoutSize.toString();
     }
 
     private ChromeBrowserProvisioner.Browser resolveBrowser() throws Exception {
