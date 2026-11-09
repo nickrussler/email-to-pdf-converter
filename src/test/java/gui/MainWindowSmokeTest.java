@@ -24,7 +24,10 @@ import static org.junit.Assert.assertTrue;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.PrintStream;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -114,6 +117,23 @@ public class MainWindowSmokeTest {
             });
             assertTrue(browserDownload.isEnabled());
             assertTrue(cache.isEnabled());
+
+            final ActionListener[] rendererListeners = renderer.getActionListeners();
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    executable.setText("/tmp/Chrome");
+                    for (ActionListener listener : rendererListeners) {
+                        listener.actionPerformed(new ActionEvent(renderer, ActionEvent.ACTION_PERFORMED, "comboBoxChanged"));
+                    }
+                }
+            });
+            assertEquals("/tmp/Chrome", executable.getText());
+            assertFalse(browserDownload.isEnabled());
+
+            Rectangle maxBounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+            assertTrue(frame[0].getWidth() <= maxBounds.width);
+            assertTrue(frame[0].getHeight() <= maxBounds.height);
 
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
