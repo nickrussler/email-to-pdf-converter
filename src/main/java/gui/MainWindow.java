@@ -37,6 +37,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import render.chrome.BrowserDownloadProgress;
 
 /**
  * Main Window GUI Class.
@@ -672,6 +673,45 @@ public class MainWindow {
      */
     private void startConversion(
                                  List<String> l, String renderer, String orientation, String executable, String browserDownload, String browserCacheDir, String customStylesheetPath, boolean showHeaders, String proxy, boolean addAttachmentNames, boolean extractAttachments) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                progressBar.setIndeterminate(false);
+                progressBar.setStringPainted(false);
+                progressBar.setValue(0);
+            }
+        });
+
+        BrowserDownloadProgress.setListener(new BrowserDownloadProgress.Listener() {
+            @Override
+            public void progress(final String message, final int percent) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        lblConvertingEmail.setText(message);
+                        progressBar.setIndeterminate(percent < 0);
+                        progressBar.setStringPainted(percent >= 0);
+                        if (percent >= 0) {
+                            progressBar.setValue(percent);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void finished() {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressBar.setIndeterminate(false);
+                        progressBar.setStringPainted(false);
+                        progressBar.setValue(0);
+                        lblConvertingEmail.setText("Converting...");
+                    }
+                });
+            }
+        });
+
         try {
             ArrayList<String> argsOptions = new ArrayList<String>(
                     buildConversionArguments(renderer, orientation, executable, browserDownload, browserCacheDir, customStylesheetPath, showHeaders, proxy, addAttachmentNames, extractAttachments));
@@ -682,6 +722,14 @@ public class MainWindow {
                 argsOptions.toArray(args);
                 args[args.length - 1] = l.get(i);
 
+                final String convertingText = "Converting email " + (i + 1) + " of " + listSize;
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        lblConvertingEmail.setText(convertingText);
+                    }
+                });
+
                 Main.main(args);
 
                 final String text = "Email " + (i + 1) + " of " + listSize;
@@ -691,11 +739,20 @@ public class MainWindow {
                     @Override
                     public void run() {
                         lblConvertingEmail.setText(text);
+                        progressBar.setIndeterminate(false);
                         progressBar.setValue(percent);
                     }
                 });
             }
         } finally {
+            BrowserDownloadProgress.setListener(null);
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    progressBar.setIndeterminate(false);
+                    progressBar.setStringPainted(false);
+                }
+            });
             btnStartConversion.setEnabled(true);
             frmEmailToPdf.setCursor(Cursor.getDefaultCursor());
         }
