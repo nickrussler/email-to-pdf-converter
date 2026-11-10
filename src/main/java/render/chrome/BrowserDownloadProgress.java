@@ -16,6 +16,8 @@
 
 package render.chrome;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Receives progress updates while Chrome is acquired or downloaded.
  */
@@ -30,24 +32,28 @@ public final class BrowserDownloadProgress {
         void finished();
     }
 
-    private static volatile Listener listener;
+    private static final AtomicReference<Listener> LISTENER = new AtomicReference<>();
 
     private BrowserDownloadProgress() {
     }
 
     public static void setListener(Listener newListener) {
-        listener = newListener;
+        LISTENER.set(newListener);
+    }
+
+    public static boolean installIfAbsent(Listener newListener) {
+        return LISTENER.compareAndSet(null, newListener);
     }
 
     static void progress(String message, int percent) {
-        Listener current = listener;
+        Listener current = LISTENER.get();
         if (current != null) {
             current.progress(message, percent);
         }
     }
 
     static void finished() {
-        Listener current = listener;
+        Listener current = LISTENER.get();
         if (current != null) {
             current.finished();
         }
