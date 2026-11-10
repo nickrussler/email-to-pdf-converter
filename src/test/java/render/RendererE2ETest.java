@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import cli.Main;
+import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
@@ -194,6 +195,24 @@ public class RendererE2ETest {
     }
 
     @Test
+    public void wrapsLongPlainTextLines() throws Exception {
+        File workDir = temporaryFolder.newFolder();
+        String start = "PLAIN_LONG_START";
+        String end = "PLAIN_LONG_END";
+        String body = start + Strings.repeat("abcdefghij", 40) + end;
+        File eml = writePlainEml(workDir, "plain-long.eml", "Plain long line", body);
+        File output = new File(workDir, "plain-long.pdf");
+
+        convert(eml, output, "A4", true, false, false);
+
+        try (PDDocument document = Loader.loadPDF(output)) {
+            String text = normalizedText(document).replaceAll("\\s+", "");
+            assertThat(text, containsString(start));
+            assertThat(text, containsString(end));
+        }
+    }
+
+    @Test
     public void rendersLandscapeOrientation() throws Exception {
         File workDir = temporaryFolder.newFolder();
         String bodyMarker = "LANDSCAPE_MARKER";
@@ -282,8 +301,16 @@ public class RendererE2ETest {
     }
 
     private static File writeHtmlEml(File workDir, String name, String subject, String body) throws IOException {
+        return writeEml(workDir, name, subject, "text/html", body);
+    }
+
+    private static File writePlainEml(File workDir, String name, String subject, String body) throws IOException {
+        return writeEml(workDir, name, subject, "text/plain", body);
+    }
+
+    private static File writeEml(File workDir, String name, String subject, String contentType, String body) throws IOException {
         File eml = new File(workDir, name);
-        String content = "Mime-Version: 1.0\r\n" + "Date: Thu, 11 Dec 2014 05:20:45 -0800\r\n" + "Message-ID: <" + name + "@example.com>\r\n" + "From: sender@example.com\r\n" + "To: recipient@example.com\r\n" + "Subject: " + subject + "\r\n" + "Content-Type: text/html; charset=utf-8\r\n" + "Content-Transfer-Encoding: 8bit\r\n" + "\r\n" + body;
+        String content = "Mime-Version: 1.0\r\n" + "Date: Thu, 11 Dec 2014 05:20:45 -0800\r\n" + "Message-ID: <" + name + "@example.com>\r\n" + "From: sender@example.com\r\n" + "To: recipient@example.com\r\n" + "Subject: " + subject + "\r\n" + "Content-Type: " + contentType + "; charset=utf-8\r\n" + "Content-Transfer-Encoding: 8bit\r\n" + "\r\n" + body;
         Files.asCharSink(eml, StandardCharsets.UTF_8).write(content);
         return eml;
     }

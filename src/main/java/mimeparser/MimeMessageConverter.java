@@ -77,7 +77,7 @@ public class MimeMessageConverter {
     }
 
     // html wrapper template for text/plain messages
-    private static final String HTML_WRAPPER_TEMPLATE = "<!DOCTYPE html><html><head><style>body{font-size: 0.5cm;}</style><meta charset=\"%s\"><title>title</title></head><body>%s</body></html>";
+    private static final String HTML_WRAPPER_TEMPLATE = "<!DOCTYPE html><html><head><style>body{font-size: 0.5cm; overflow-wrap: anywhere; word-wrap: break-word;}</style><meta charset=\"%s\"><title>title</title></head><body>%s</body></html>";
     private static final String ADD_HEADER_IFRAME_HTML_TEMPLATE = "<iframe id=\"%s\" src=\"%s\" style=\"position:absolute;overflow:hidden;width:%dpx;height:%dpx;top:0;left:0;z-index:100003;border:none;padding:0;margin:0\"></iframe>";
     private static final String HEADER_PADDING_TEMPLATE = "<style>html{padding-top:%dpx !important;}</style>";
     private static final String HEADER_FRAME_ID = "header-frame-6jk3h6a234g2a3";
