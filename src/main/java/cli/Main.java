@@ -27,6 +27,7 @@ import java.net.Proxy;
 import java.nio.charset.StandardCharsets;
 import mimeparser.MimeMessageConverter;
 import render.RenderOptions;
+import render.chrome.BrowserDownloadProgress;
 import util.HttpUtils;
 import util.LogLevel;
 import util.Logger;
@@ -147,11 +148,17 @@ public class Main {
         RenderOptions renderOptions = new RenderOptions(
                 renderer, cli.getRendererExecutable(), proxy, cli.getPageSize(), cli.getDPI(), cli.isDangerousEnableJavaScript(), null, browserDownload, cli.getBrowserCacheDir(), orientation, printStylesheet);
 
+        CliBrowserDownloadProgress downloadProgress = CliBrowserDownloadProgress.installIfSupported();
         try {
             MimeMessageConverter.convertToPdf(
                     in, out, cli.isHideHeaders(), cli.isAddAttachmentNames(), cli.isExtractAttachments(), cli.getExtractAttachmentsDir(), renderOptions);
         } catch (Exception e) {
             Logger.error("The email could not be converted. Error: %s", Throwables.getStackTraceAsString(e));
+        } finally {
+            if (downloadProgress != null) {
+                downloadProgress.clear();
+                BrowserDownloadProgress.setListener(null);
+            }
         }
     }
 }
