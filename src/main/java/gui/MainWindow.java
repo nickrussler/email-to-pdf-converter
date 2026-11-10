@@ -740,6 +740,7 @@ public class MainWindow {
                     public void run() {
                         lblConvertingEmail.setText(text);
                         progressBar.setIndeterminate(false);
+                        progressBar.setStringPainted(false);
                         progressBar.setValue(percent);
                     }
                 });
