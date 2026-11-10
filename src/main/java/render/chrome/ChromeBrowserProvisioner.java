@@ -156,8 +156,10 @@ final class ChromeBrowserProvisioner {
             try {
                 Files.createDirectories(browserCacheRoot());
                 archive = Files.createTempFile(browserCacheRoot(), "chrome-headless-shell-", ".zip");
-                downloadFile(metadata.url, archive);
+                String downloadMessage = "Downloading Chrome headless shell " + metadata.version;
+                downloadFile(metadata.url, archive, downloadMessage);
 
+                BrowserDownloadProgress.progress("Installing Chrome headless shell " + metadata.version, -1);
                 staging = Files.createTempDirectory(browserCacheRoot(), ".download-");
                 extractArchive(archive, staging);
                 Path extractedExecutable = staging.resolve(platform.executableRelativePath());
@@ -181,6 +183,7 @@ final class ChromeBrowserProvisioner {
                 if (!Files.isRegularFile(executable)) {
                     throw new IOException("Downloaded Chrome headless shell executable is missing: " + executable);
                 }
+                BrowserDownloadProgress.finished();
                 return Browser.downloaded(executable.toAbsolutePath().toString(), metadata.version);
             } catch (Exception e) {
                 lastError = e;
@@ -289,7 +292,7 @@ final class ChromeBrowserProvisioner {
         }
     }
 
-    private void downloadFile(String value, Path target) throws IOException {
+    private void downloadFile(String value, Path target, String progressMessage) throws IOException {
         HttpURLConnection connection = openConnection(value);
         try {
             int status = connection.getResponseCode();
@@ -297,9 +300,11 @@ final class ChromeBrowserProvisioner {
                 throw new IOException("HTTP " + status + " from " + value);
             }
             long expectedSize = connection.getContentLengthLong();
+            BrowserDownloadProgress.progress(progressMessage, expectedSize > 0 ? 0 : -1);
             try (InputStream input = connection.getInputStream(); OutputStream output = Files.newOutputStream(target)) {
-                copy(input, output);
+                copyWithProgress(input, output, expectedSize, progressMessage);
             }
+            BrowserDownloadProgress.progress(progressMessage, 100);
             long actualSize = Files.size(target);
             if (expectedSize >= 0 && actualSize != expectedSize) {
                 throw new IOException("Downloaded " + actualSize + " bytes but expected " + expectedSize + " from " + value);
@@ -427,6 +432,24 @@ final class ChromeBrowserProvisioner {
         int read;
         while ((read = input.read(buffer)) != -1) {
             output.write(buffer, 0, read);
+        }
+    }
+
+    private static void copyWithProgress(InputStream input, OutputStream output, long expectedSize, String progressMessage) throws IOException {
+        byte[] buffer = new byte[8192];
+        long total = 0;
+        int lastPercent = -1;
+        int read;
+        while ((read = input.read(buffer)) != -1) {
+            output.write(buffer, 0, read);
+            total += read;
+            if (expectedSize > 0) {
+                int percent = (int) Math.min(100L, (total * 100L) / expectedSize);
+                if (percent != lastPercent) {
+                    lastPercent = percent;
+                    BrowserDownloadProgress.progress(progressMessage, percent);
+                }
+            }
         }
     }
 
