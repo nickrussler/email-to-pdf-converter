@@ -64,10 +64,16 @@ public final class ChromeRenderer implements PdfRenderer {
     private static final double PRINT_MARGIN_MM = 10.0;
 
     private final RenderOptions options;
+    private final long loadTimeoutMs;
     private volatile ChromeBrowserProvisioner.Browser resolvedBrowser;
 
     public ChromeRenderer(RenderOptions options) {
+        this(options, ChromeCdpClient.LOAD_TIMEOUT_MS);
+    }
+
+    ChromeRenderer(RenderOptions options, long loadTimeoutMs) {
         this.options = options;
+        this.loadTimeoutMs = loadTimeoutMs;
     }
 
     @Override
@@ -133,7 +139,7 @@ public final class ChromeRenderer implements PdfRenderer {
             browser = builder.start();
 
             String pageWebSocketUrl = waitForPageWebSocket(port, executable, browser, browserLog);
-            cdp = new ChromeCdpClient(new URI(pageWebSocketUrl));
+            cdp = new ChromeCdpClient(new URI(pageWebSocketUrl), loadTimeoutMs);
             cdp.connectBlocking(START_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (!cdp.isOpen()) {
                 throw new IOException("Could not connect to Chrome DevTools: " + pageWebSocketUrl);
@@ -155,7 +161,10 @@ public final class ChromeRenderer implements PdfRenderer {
             document.addProperty("frameId", frameId);
             document.addProperty("html", html);
             cdp.sendCommand("Page.setDocumentContent", document);
-            cdp.awaitLoad();
+            if (!cdp.awaitLoad()) {
+                Logger.info("Timed out waiting for Chrome to finish loading the document; rendering the loaded content.");
+                cdp.sendCommand("Page.stopLoading");
+            }
             applyStylesheet(cdp, frameId, stylesheet);
 
             JsonObject pdfOptions = new JsonObject();
