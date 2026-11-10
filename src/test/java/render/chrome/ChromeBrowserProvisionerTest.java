@@ -35,6 +35,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -151,6 +153,38 @@ public class ChromeBrowserProvisionerTest {
         assertEquals(VERSION, browser.getVersion());
         assertEquals(1, metadataRequests.get());
         assertEquals(1, artifactRequests.get());
+    }
+
+    @Test
+    public void reportsBrowserDownloadProgress() throws Exception {
+        environment.set("PATH", temporaryFolder.newFolder("empty-path-progress").getAbsolutePath());
+        environment.clear("CHROME_PATH", "CHROME_BIN", "GOOGLE_CHROME_BIN", "CHROMIUM_PATH");
+        final List<String> messages = new ArrayList<>();
+        final List<Integer> percentages = new ArrayList<>();
+        final int[] finished = new int[1];
+        BrowserDownloadProgress.setListener(new BrowserDownloadProgress.Listener() {
+            @Override
+            public void progress(String message, int percent) {
+                messages.add(message);
+                percentages.add(percent);
+            }
+
+            @Override
+            public void finished() {
+                finished[0]++;
+            }
+        });
+
+        try {
+            provisioner(options(RenderOptions.BrowserDownload.AUTO)).resolve();
+        } finally {
+            BrowserDownloadProgress.setListener(null);
+        }
+
+        assertTrue(messages.get(0).contains("Downloading Chrome headless shell"));
+        assertTrue(percentages.contains(0));
+        assertTrue(percentages.contains(100));
+        assertEquals(1, finished[0]);
     }
 
     @Test
