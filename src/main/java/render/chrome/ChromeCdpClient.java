@@ -35,26 +35,33 @@ import org.java_websocket.handshake.ServerHandshake;
  */
 final class ChromeCdpClient extends WebSocketClient {
     private static final long COMMAND_TIMEOUT_MS = 30000;
-    private static final long LOAD_TIMEOUT_MS = 30000;
+    static final long LOAD_TIMEOUT_MS = 30000;
 
+    private final long loadTimeoutMs;
     private final AtomicLong nextId = new AtomicLong();
     private final Map<Long, CompletableFuture<JsonObject>> pending = new ConcurrentHashMap<>();
     private volatile CompletableFuture<Void> loadFuture = CompletableFuture.completedFuture(null);
 
     ChromeCdpClient(URI serverUri) {
+        this(serverUri, LOAD_TIMEOUT_MS);
+    }
+
+    ChromeCdpClient(URI serverUri, long loadTimeoutMs) {
         super(serverUri);
+        this.loadTimeoutMs = loadTimeoutMs;
     }
 
     void prepareLoad() {
         loadFuture = new CompletableFuture<>();
     }
 
-    void awaitLoad() throws IOException {
+    boolean awaitLoad() throws IOException {
         CompletableFuture<Void> future = loadFuture;
         try {
-            future.get(LOAD_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            future.get(loadTimeoutMs, TimeUnit.MILLISECONDS);
+            return true;
         } catch (TimeoutException e) {
-            throw new IOException("Timed out waiting for Chrome to finish loading the document", e);
+            return false;
         } catch (ExecutionException e) {
             Throwable cause = e.getCause() == null ? e : e.getCause();
             throw new IOException("Chrome disconnected while loading the document: " + cause.getMessage(), cause);
