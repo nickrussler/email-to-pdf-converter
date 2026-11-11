@@ -3,16 +3,18 @@ plugins {
     id 'eclipse'
 
     id 'com.diffplug.spotless' version '6.13.0'
-    id 'com.github.spotbugs' version '4.5.1'
+    id 'com.github.spotbugs' version '5.2.5'
 
     id 'jacoco'
 
-    id 'com.github.johnrengelman.shadow' version '6.0.0'
-    id 'com.github.ben-manes.versions' version '0.33.0'
-    id 'com.palantir.git-version' version '0.12.3'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'io.github.ben-manes.versions' version '0.67.0'
+    id 'com.palantir.git-version' version '3.4.0'
 }
 
-sourceCompatibility = 1.8
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+}
 
 /* git version */
 def gitVersionDetails = versionDetails()
@@ -30,23 +32,11 @@ jar {
 }
 
 shadowJar {
-    baseName = 'emailconverter'
+    archiveBaseName = 'emailconverter'
 }
 
 repositories {
     mavenCentral()
-}
-
-/* Gradle 6.6 does not request the JVM environment attribute, so dependencies that
-   publish separate Android and JRE variants (for example Guava) would otherwise be
-   ambiguous. Request the standard JVM variant explicitly. */
-configurations.all {
-    attributes {
-        attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
-    }
-    /* log4j-api 2.26 pulls in OSGi annotations compiled for Java 17. They are not
-       needed at compile or run time, and their bytecode is not Java 8 compatible. */
-    exclude group: 'biz.aQute.bnd', module: 'biz.aQute.bnd.annotation'
 }
 
 dependencies {
@@ -134,8 +124,8 @@ compileJava.dependsOn spotlessApply
 
 /* spotbugs configuration */
 spotbugs {
-    effort 'max'
-    reportLevel 'high'
+    effort = 'max'
+    reportLevel = 'high'
 }
 
 spotbugsMain {
