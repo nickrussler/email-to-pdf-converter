@@ -19,7 +19,6 @@ package mimeparser;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.ByteStreams;
-import com.sun.mail.util.BASE64DecoderStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -183,7 +182,7 @@ public class MimeMessageParser {
                 if (p.isMimeType("image/*") && (p.getHeader("Content-Id") != null)) {
                     String id = p.getHeader("Content-Id")[0];
 
-                    BASE64DecoderStream b64ds = (BASE64DecoderStream) p.getContent();
+                    InputStream b64ds = (InputStream) p.getContent();
                     String imageBase64 = BaseEncoding.base64().encode(ByteStreams.toByteArray(b64ds));
                     result.put(id, new MimeObjectEntry<String>(imageBase64, new ContentType(p.getContentType())));
                 }
