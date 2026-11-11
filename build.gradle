@@ -37,23 +37,35 @@ repositories {
     mavenCentral()
 }
 
+/* Gradle 6.6 does not request the JVM environment attribute, so dependencies that
+   publish separate Android and JRE variants (for example Guava) would otherwise be
+   ambiguous. Request the standard JVM variant explicitly. */
+configurations.all {
+    attributes {
+        attribute(Attribute.of("org.gradle.jvm.environment", String), "standard-jvm")
+    }
+    /* log4j-api 2.26 pulls in OSGi annotations compiled for Java 17. They are not
+       needed at compile or run time, and their bytecode is not Java 8 compatible. */
+    exclude group: 'biz.aQute.bnd', module: 'biz.aQute.bnd.annotation'
+}
+
 dependencies {
-    implementation 'com.google.guava:guava:29.0-jre'
-    implementation 'com.sun.mail:jakarta.mail:2.0.1'
-    implementation 'com.beust:jcommander:1.78'
-    implementation 'org.apache.tika:tika-core:2.9.2'
+    implementation 'com.google.guava:guava:33.8.0-jre'
+    implementation 'com.sun.mail:jakarta.mail:2.0.2'
+    implementation 'com.beust:jcommander:1.82'
+    implementation 'org.apache.tika:tika-core:2.9.4'
     implementation 'com.github.markusbernhardt:proxy-vole:1.0.5'
-    implementation 'org.simplejavamail:simple-java-mail:9.3.9'
-    implementation 'org.simplejavamail:outlook-module:9.3.9'
+    implementation 'org.simplejavamail:simple-java-mail:9.3.10'
+    implementation 'org.simplejavamail:outlook-module:9.3.10'
     implementation 'org.slf4j:slf4j-simple:2.0.20'
-    implementation 'org.apache.logging.log4j:log4j-to-slf4j:2.21.1'
+    implementation 'org.apache.logging.log4j:log4j-to-slf4j:2.26.1'
     implementation 'org.apache.pdfbox:pdfbox:3.0.8'
     implementation 'org.java-websocket:Java-WebSocket:1.6.0'
     implementation 'com.google.code.gson:gson:2.15.0'
 
-    testImplementation 'junit:junit:4.+'
-    testImplementation 'org.hamcrest:hamcrest-all:1.+'
-    testImplementation 'com.github.stefanbirkner:system-rules:1.+'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.hamcrest:hamcrest-all:1.3'
+    testImplementation 'com.github.stefanbirkner:system-rules:1.19.0'
 }
 
 /* launch4j launch configuration */
