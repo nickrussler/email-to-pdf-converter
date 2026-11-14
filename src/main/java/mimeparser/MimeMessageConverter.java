@@ -318,14 +318,7 @@ public class MimeMessageConverter {
 
         // Append attachment filename list to body
         if (addAttachmentNames) {
-            String attachmentsHtml = "";
-            List<AttachmentResource> attachments = EmailConverter.mimeMessageToEmail(message).getAttachments();
-            if (attachments.size() > 0) {
-                for (AttachmentResource attach : attachments) {
-                    attachmentsHtml += String.format(ATTACHMENT_ITEM_TEMPLATE, attach.getName());
-                }
-                htmlBody += String.format(ATTACHMENT_LIST_TEMPLATE, "Attachments:", attachmentsHtml);
-            }
+            htmlBody += buildAttachmentListHtml(EmailConverter.mimeMessageToEmail(message).getAttachments());
         }
 
         File pdf = new File(pdfOutputPath);
@@ -398,6 +391,26 @@ public class MimeMessageConverter {
         }
 
         Logger.info("Conversion finished");
+    }
+
+    /**
+     * Build the HTML block listing the attachment names. Attachment names are client-controlled
+     * data and are HTML-escaped, matching the escaping applied to the header fields.
+     *
+     * @param attachments attachments of the processed email
+     * @return the attachment list HTML block, or an empty string if there are no attachments
+     */
+    static String buildAttachmentListHtml(List<AttachmentResource> attachments) {
+        if (attachments.isEmpty()) {
+            return "";
+        }
+
+        String attachmentsHtml = "";
+        for (AttachmentResource attach : attachments) {
+            attachmentsHtml += String.format(ATTACHMENT_ITEM_TEMPLATE, HtmlEscapers.htmlEscaper().escape(attach.getName()));
+        }
+
+        return String.format(ATTACHMENT_LIST_TEMPLATE, "Attachments:", attachmentsHtml);
     }
 
     private static String getAttachmentFilename(AttachmentResource attachmentResource, Map<String, Integer> attachmentFileNameFrequency) {
