@@ -23,6 +23,8 @@ import static org.junit.Assert.fail;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
@@ -75,7 +77,9 @@ public class MainWindowScreenshotTest {
             robot.waitForIdle();
             robot.delay(500);
             // The OS draws the title bar, so capture the visible window from the desktop.
-            BufferedImage screenshot = robot.createScreenCapture(frame[0].getBounds());
+            // Do not use the frame bounds directly: on Windows they include an invisible
+            // resize border that shows the desktop around the window.
+            BufferedImage screenshot = robot.createScreenCapture(visibleWindowBounds(frame[0]));
 
             File output = new File(outputPath);
             File parent = output.getParentFile();
@@ -122,6 +126,15 @@ public class MainWindowScreenshotTest {
             }
         }
         return null;
+    }
+
+    private static Rectangle visibleWindowBounds(JFrame frame) {
+        Rectangle frameBounds = frame.getBounds();
+        Point contentLocation = frame.getContentPane().getLocationOnScreen();
+        int titleBarHeight = contentLocation.y - frameBounds.y;
+        Rectangle bounds = new Rectangle(contentLocation.x, frameBounds.y, frame.getContentPane().getWidth(), titleBarHeight + frame.getContentPane().getHeight());
+        assertTrue("Could not determine the visible window bounds", bounds.width > 0 && bounds.height > 0);
+        return bounds;
     }
 
     private static String screenshotPath() {
