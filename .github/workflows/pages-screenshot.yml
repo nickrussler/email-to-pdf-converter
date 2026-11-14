@@ -31,6 +31,11 @@ jobs:
       with:
         distribution: corretto
         java-version: '8'
+    - name: Set desktop resolution
+      shell: pwsh
+      run: |
+        Set-DisplayResolution -Width 1920 -Height 1080 -Force -ErrorAction Stop
+        Get-DisplayResolution
     - name: Capture GUI screenshot
       shell: pwsh
       env:
